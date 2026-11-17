@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lib:
+    name: Lib tests (plain Ruby)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+      - name: Run framework-independent tests
+        run: ruby bin/test-lib
+
+  lint:
+    name: RuboCop
+    runs-on: ubuntu-latest
+    # Non-blocking during the bootstrap week; see docs/sprint/PLAN.md (day 1 makes it blocking).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Lint
+        run: bin/rubocop -f github
+
+  security:
+    name: Brakeman
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Scan for common Rails security vulnerabilities
+        run: bin/brakeman --no-pager --no-ensure-latest
+
+  test:
+    name: Rails tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # commits regenerated Gemfile.lock / db/schema.rb back to main
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=5
+    env:
+      RAILS_ENV: test
+      CI: "true"
+      DB_HOST: localhost
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Build test database from migrations
+        run: bin/rails db:create db:migrate
+      - name: Run tests
+        run: bin/rails test
+      - name: Commit generated files
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Gemfile.lock db/schema.rb
+          if git diff --cached --quiet; then
+            echo "Generated files are up to date."
+            exit 0
+          fi
+          git commit -m "chore: regenerate Gemfile.lock and db/schema.rb [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
