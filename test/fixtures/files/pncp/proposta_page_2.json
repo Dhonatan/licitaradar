@@ -1,0 +1,30 @@
+{
+  "data": [
+    {
+      "numeroControlePNCP": "00000000000353-1-000031/2026",
+      "numeroCompra": "31/2026",
+      "anoCompra": 2026,
+      "processo": "31/2026",
+      "modalidadeId": 6,
+      "modalidadeNome": "Pregão - Eletrônico",
+      "modoDisputaNome": "Aberto",
+      "situacaoCompraId": 1,
+      "situacaoCompraNome": "Divulgada no PNCP",
+      "objetoCompra": "Aquisição de licenças de software de gestão de mídias sociais.",
+      "srp": false,
+      "valorTotalEstimado": 42000,
+      "dataAberturaProposta": "2026-11-17T08:00:00",
+      "dataEncerramentoProposta": "2026-11-25T09:00:00",
+      "dataPublicacaoPncp": "2026-11-15T09:10:00",
+      "dataAtualizacao": "2026-11-15T09:10:00",
+      "sequencialCompra": 31,
+      "orgaoEntidade": { "cnpj": "00000000000353", "razaoSocial": "UNIVERSIDADE FEDERAL DE EXEMPLO", "poderId": "E", "esferaId": "F" },
+      "unidadeOrgao": { "codigoUnidade": "153000", "nomeUnidade": "Pró-Reitoria de Administração", "codigoIbge": 9999903, "municipioNome": "Capital Exemplo", "ufSigla": "BA", "ufNome": "Bahia" }
+    }
+  ],
+  "totalRegistros": 3,
+  "totalPaginas": 2,
+  "numeroPagina": 2,
+  "paginasRestantes": 0,
+  "empty": false
+}

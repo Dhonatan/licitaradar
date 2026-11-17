@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+# Runs the framework-independent tests in test/lib with plain Ruby + Minitest.
+# No Rails, no database, no bundle install needed — useful for quick feedback.
+#
+#   bin/test-lib            # all lib tests
+#   bin/test-lib client     # only files whose path contains "client"
+
+root = File.expand_path("..", __dir__)
+filter = ARGV.first
+
+Dir.glob(File.join(root, "test/lib/**/*_test.rb")).sort.each do |file|
+  next if filter && !file.include?(filter)
+
+  require file
+end
