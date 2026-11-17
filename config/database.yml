@@ -1,0 +1,20 @@
+# PostgreSQL is required: search uses Portuguese full-text search (tsvector).
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV["DB_HOST"] %>
+  username: <%= ENV["DB_USERNAME"] %>
+  password: <%= ENV["DB_PASSWORD"] %>
+
+development:
+  <<: *default
+  database: licitaradar_development
+
+test:
+  <<: *default
+  database: licitaradar_test
+
+production:
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>

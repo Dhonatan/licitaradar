@@ -1,0 +1,30 @@
+# Bundler / Ruby
+/.bundle
+/vendor/bundle
+
+# Environment and secrets — never commit these
+/.env
+/.env.*
+!/.env.example
+/config/master.key
+/config/credentials/*.key
+
+# Logs, temp files and local storage
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/tmp/pids/*
+!/tmp/pids/.keep
+/storage/*
+!/storage/.keep
+/public/assets
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Test coverage
+/coverage

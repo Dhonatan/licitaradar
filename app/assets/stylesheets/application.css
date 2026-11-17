@@ -1,0 +1,39 @@
+/* LicitaRadar — plain CSS, no build step. */
+:root {
+  --ink: #14213d;
+  --muted: #5c6b80;
+  --accent: #0f7b6c;
+  --bg: #f7f8fa;
+  --card: #ffffff;
+  --line: #e3e7ee;
+  --radius: 12px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+body { margin: 0; line-height: 1.55; }
+a { color: var(--accent); }
+
+.site-header, .site-footer { padding: 1rem 1.5rem; }
+.site-header { background: var(--card); border-bottom: 1px solid var(--line); }
+.site-footer { color: var(--muted); font-size: 0.875rem; text-align: center; }
+.brand { font-weight: 700; font-size: 1.25rem; text-decoration: none; color: var(--ink); }
+
+.container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+.hero h1 { font-size: clamp(1.75rem, 4vw, 2.5rem); line-height: 1.2; margin-bottom: 0.5rem; }
+.lead { font-size: 1.125rem; color: var(--muted); max-width: 60ch; }
+.status-pill {
+  display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px;
+  background: #e6f4f1; color: var(--accent); font-size: 0.875rem; font-weight: 600;
+}
+
+.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 2rem 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem; }
+.card h2 { font-size: 1.05rem; margin-top: 0; }
+.card p { color: var(--muted); margin-bottom: 0; }
+
+.modalities { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.modalities li { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.75rem; }
+.modalities .code { color: var(--muted); font-variant-numeric: tabular-nums; }

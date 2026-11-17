@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <title><%= content_for(:title) || "LicitaRadar — licitações abertas para o seu nicho" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Encontre licitações públicas abertas no PNCP que combinam com o seu negócio.">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <header class="site-header">
+      <%= link_to "LicitaRadar", root_path, class: "brand" %>
+    </header>
+
+    <main class="container">
+      <%= yield %>
+    </main>
+
+    <footer class="site-footer">
+      Dados públicos do <a href="https://pncp.gov.br" rel="noopener" target="_blank">Portal Nacional de Contratações Públicas (PNCP)</a>.
+      Projeto open source sob licença MIT.
+    </footer>
+  </body>
+</html>
