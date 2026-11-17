@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+# Quick manual check against the real PNCP API, without Rails or a database.
+#
+#   bin/pncp-probe                 # Pregão eletrônico (6), first page
+#   bin/pncp-probe 8 SP            # Dispensa (8) in São Paulo
+#
+# Prints a short summary of tenders with proposals open right now.
+
+require "date"
+lib = File.expand_path("../lib/pncp", __dir__)
+%w[ error http_error invalid_record page modalities pii_scrubber net_http_transport tender_normalizer client ].each do |file|
+  require File.join(lib, file)
+end
+
+modality_id = Integer(ARGV[0] || 6)
+state = ARGV[1]
+
+client = Pncp::Client.new
+page = client.open_tenders(modality_id: modality_id, until_date: Date.today + 60, state: state, page_size: 20)
+
+puts "#{Pncp::Modalities.name_for(modality_id)} — #{page.total_records} abertas (página #{page.number}/#{page.total_pages})"
+puts
+
+page.records.each do |record|
+  tender = Pncp::TenderNormalizer.call(record)
+  value = tender[:estimated_value] ? format("R$ %.2f", tender[:estimated_value]) : "valor sigiloso"
+  puts "• [#{tender[:state]}] #{tender[:agency_name]}"
+  puts "  #{tender[:object_description].to_s[0, 140]}"
+  puts "  #{value} — propostas até #{tender[:proposals_close_at]&.strftime('%d/%m/%Y %H:%M')}"
+  puts "  #{tender[:pncp_url]}"
+  puts
+end
