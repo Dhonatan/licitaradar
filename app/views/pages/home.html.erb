@@ -1,0 +1,34 @@
+<% content_for :title, "LicitaRadar — licitações abertas para o seu nicho" %>
+
+<section class="hero">
+  <h1>Licitações abertas para o seu nicho, sem garimpar portal por portal.</h1>
+  <p class="lead">
+    O LicitaRadar acompanha o Portal Nacional de Contratações Públicas (PNCP), filtra o que combina
+    com o seu negócio e avisa você antes do prazo de propostas acabar.
+  </p>
+  <p class="status-pill">Em construção — primeira versão pública em breve.</p>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h2>1. Coleta diária</h2>
+    <p>Consultamos a API pública do PNCP e guardamos só o que importa: objeto, órgão, valor estimado e prazos.</p>
+  </article>
+  <article class="card">
+    <h2>2. Busca de verdade</h2>
+    <p>A API do PNCP ignora filtros de palavra-chave. Aqui a busca é feita em português, com filtros por estado, modalidade e valor.</p>
+  </article>
+  <article class="card">
+    <h2>3. Alertas</h2>
+    <p>Salve uma busca e receba um resumo por e-mail com as oportunidades novas do dia.</p>
+  </article>
+</section>
+
+<section>
+  <h2>Modalidades acompanhadas</h2>
+  <ul class="modalities">
+    <% @modalities.each do |id, name| %>
+      <li><span class="code"><%= id %></span> <%= name %></li>
+    <% end %>
+  </ul>
+</section>
