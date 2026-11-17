@@ -2,6 +2,10 @@
 require "rubygems"
 require "bundler/setup"
 
-ARGV.unshift("--ensure-latest") unless ARGV.include?("--no-ensure-latest")
+# By default fail when Brakeman itself is outdated; `--no-ensure-latest` skips that check
+# (CI uses it so a new Brakeman release can't break unrelated builds).
+if ARGV.delete("--no-ensure-latest").nil?
+  ARGV.unshift("--ensure-latest")
+end
 
 load Gem.bin_path("brakeman", "brakeman")
