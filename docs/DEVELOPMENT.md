@@ -5,7 +5,7 @@ progress is logged in `docs/sprint/LOG.md`.
 
 ## Ground rules
 
-- Ruby 3.3.6, Rails 8.1, PostgreSQL. Hotwire/import maps, plain CSS — **no Node build**.
+- Ruby 3.3.13, Rails 8.1, PostgreSQL. Hotwire/import maps, plain CSS — **no Node build**.
 - Style: rubocop-rails-omakase (double quotes, spaces inside array brackets: `[ 1, 2 ]`,
   `private` with indented methods below it).
 - `lib/pncp/` must stay **framework-independent** (stdlib only). Its tests live in

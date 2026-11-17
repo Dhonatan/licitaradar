@@ -57,7 +57,7 @@ dependency**, so it can be tested and reused on its own.
 
 ## Getting started
 
-Requirements: Ruby 3.3.6, PostgreSQL 14+.
+Requirements: Ruby 3.3.13, PostgreSQL 14+.
 
 ```bash
 git clone https://github.com/Dhonatan/licitaradar.git
