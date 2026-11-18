@@ -10,9 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_18_140100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_18_140200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "sync_runs", force: :cascade do |t|
+    t.integer "modality_id", null: false
+    t.string "status", default: "running", null: false
+    t.datetime "started_at", null: false
+    t.datetime "finished_at"
+    t.integer "pages", default: 0, null: false
+    t.integer "fetched_count", default: 0, null: false
+    t.integer "upserted_count", default: 0, null: false
+    t.integer "skipped_count", default: 0, null: false
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["modality_id", "started_at"], name: "index_sync_runs_on_modality_id_and_started_at"
+    t.index ["status"], name: "index_sync_runs_on_status"
+  end
 
   create_table "tenders", force: :cascade do |t|
     t.string "pncp_control_number", null: false
