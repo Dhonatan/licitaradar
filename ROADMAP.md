@@ -9,8 +9,8 @@ Work is organized in phases. Phase 1 is a one-week bootstrap sprint (day-by-day 
 - [x] PNCP API client: pagination, retries with backoff, 204 handling
 - [x] Normalizer: Brasília times, decimals, CNPJ, public PNCP URL
 - [x] LGPD: mask CPF numbers in free text
-- [ ] `tenders` table with Portuguese full-text search column
-- [ ] Idempotent sync (upsert by PNCP control number) + `SyncRun` audit log
+- [x] `tenders` table with Portuguese full-text search column
+- [x] Idempotent sync (upsert by PNCP control number) + `SyncRun` audit log
 - [ ] Public search page: keywords, state, modality, value range, "closing soon"
 - [ ] Niche presets (marketing & communication, events, IT services)
 - [ ] Accounts, saved searches and match engine

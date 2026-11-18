@@ -41,7 +41,8 @@ day-by-day log in [`docs/sprint/`](docs/sprint).
 | PNCP API client (pagination, retries, 204 handling) | ✅ done, tested |
 | Record normalization (Brasília times, decimals, CNPJ, public URL) | ✅ done, tested |
 | LGPD: CPF masking in free-text fields | ✅ done, tested |
-| Persistence + daily sync | ⏳ in progress |
+| Persistence (`tenders` with Portuguese full-text column) + idempotent sync | ✅ done, tested |
+| Recurring schedule for the sync (Solid Queue) | 🗓️ planned |
 | Search UI, saved searches, e-mail alerts | 🗓️ planned |
 | JSON API + React portal | 🗓️ planned |
 
@@ -72,6 +73,13 @@ Try the PNCP client against the real API (no database needed):
 ```bash
 bin/pncp-probe          # open "Pregão Eletrônico" tenders
 bin/pncp-probe 8 PE     # open "Dispensa" tenders in Pernambuco
+```
+
+Load open tenders into your local database:
+
+```bash
+bin/rails pncp:sync                  # every competitive modality
+MODALITIES=6,8 bin/rails pncp:sync   # only Pregão Eletrônico and Dispensa
 ```
 
 ## Running tests

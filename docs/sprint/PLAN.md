@@ -28,28 +28,28 @@ Default niche presets (configurable later): **Marketing & comunicação**, **Eve
 - [x] CI: lib tests, Rails tests (Postgres), RuboCop (non-blocking), Brakeman
 - [x] README, LICENSE (MIT), ROADMAP, this plan, docs/DEVELOPMENT.md
 
-## Day 1 — Wed, Nov 18 · Persistence + sync
+## Day 1 — Wed, Nov 18 · Persistence + sync ✅
 
-- [ ] Make sure the first CI run is green and `Gemfile.lock` was committed by the bot; fix anything red.
-- [ ] Fix RuboCop offenses and make the `lint` job blocking (remove `continue-on-error`).
-- [ ] Migration `create_tenders` with every attribute produced by `Pncp::TenderNormalizer`
+- [x] Make sure the first CI run is green and `Gemfile.lock` was committed by the bot; fix anything red.
+- [x] Fix RuboCop offenses and make the `lint` job blocking (remove `continue-on-error`).
+- [x] Migration `create_tenders` with every attribute produced by `Pncp::TenderNormalizer`
       (string/integer/decimal(15,4)/datetime/boolean), `raw jsonb`, `last_seen_at`,
       unique index on `pncp_control_number`, indexes on `proposals_close_at`, `state`,
       `modality_id`, `status_id`.
-- [ ] Generated column `searchable tsvector` =
+- [x] Generated column `searchable tsvector` =
       `to_tsvector('portuguese', coalesce(object_description,'') || ' ' || coalesce(additional_info,'') || ' ' || coalesce(agency_name,'') || ' ' || coalesce(unit_name,''))`
       stored, with a GIN index.
-- [ ] Model `Tender`: validations, scopes `open_for_proposals` (status 1 and close_at in the future),
+- [x] Model `Tender`: validations, scopes `open_for_proposals` (status 1 and close_at in the future),
       `closing_within(days)`, `in_state`, `of_modality`, `value_between`.
-- [ ] Migration + model `SyncRun` (modality_id, started_at, finished_at, status enum
+- [x] Migration + model `SyncRun` (modality_id, started_at, finished_at, status enum
       running/succeeded/failed, pages, fetched_count, upserted_count, error_message).
-- [ ] Service `Tenders::Sync` (app/services): for each modality in `Pncp::Modalities::COMPETITIVE`,
+- [x] Service `Tenders::Sync` (app/services): for each modality in `Pncp::Modalities::COMPETITIVE`,
       walk `Pncp::Client#each_open_tender(until_date: Date.current + 120)`, normalize, collect,
       `Tender.upsert_all` in batches of 200 (unique_by pncp_control_number), set `last_seen_at`,
       record a `SyncRun`. Skip `Pncp::InvalidRecord` (count it). One failing modality must not
       abort the others.
-- [ ] `SyncOpenTendersJob` (ActiveJob) wrapping the service; rake task `pncp:sync`.
-- [ ] Tests: model scopes, sync service with WebMock stubs built from the fixtures
+- [x] `SyncOpenTendersJob` (ActiveJob) wrapping the service; rake task `pncp:sync`.
+- [x] Tests: model scopes, sync service with WebMock stubs built from the fixtures
       (idempotency: running twice keeps 3 tenders and updates changed fields; failure is
       recorded in SyncRun).
 
