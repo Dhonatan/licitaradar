@@ -23,8 +23,6 @@ jobs:
   lint:
     name: RuboCop
     runs-on: ubuntu-latest
-    # Non-blocking during the bootstrap week; see docs/sprint/PLAN.md (day 1 makes it blocking).
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
