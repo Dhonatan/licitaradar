@@ -38,3 +38,17 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
 - Dates are Brasília local time without offset; `valorTotalEstimado == 0` usually means
   a confidential estimate, not a free purchase.
 - Public page of a tender: `https://pncp.gov.br/app/editais/{cnpj}/{ano}/{sequencial}`.
+
+## Search notes
+
+- `tenders.searchable` is a stored generated `tsvector` (Portuguese config) over object,
+  additional info, agency and unit names, with accents folded by `translate()`.
+  `unaccent()` can't be used there (not immutable) and custom SQL functions or text
+  search configurations would not survive `db/schema.rb`. Any query text must be folded
+  with `Tender.fold_accents` before reaching `websearch_to_tsquery`/`to_tsquery`.
+- `Tenders::Search` is the single entry point for searching (UI today; API and saved
+  searches later). It only returns tenders open for proposals.
+- Niche presets live in `config/niches.yml`. Portuguese stemming is aggressive: check
+  new keywords with `SELECT to_tsvector('portuguese', 'palavra')` — e.g. "publicidade"
+  and "pública" share the stem `public`, so niches use phrases instead of that word.
+- `bin/rails db:seed` loads 30 fictional tenders (idempotent) for working offline.

@@ -92,3 +92,91 @@ One entry per working session, newest at the bottom.
 - No guard against two syncs running at the same time; add `limits_concurrency` when
   Solid Queue is set up (Day 4).
 - Nothing moved to the next day.
+
+## Day 2 — Thu, Nov 19, 2026
+
+**Starting point**
+- CI on `main` was green (run for `462b9a0`); no unchecked tasks from earlier days.
+
+**Done**
+- Accent-insensitive search: `tenders.searchable` rebuilt with accents folded by
+  `translate()` (á→a, ç→c, …); `Tender.fold_accents` folds query text with the same table
+  (a test asserts the model and migration tables stay identical). This closes the Day 1
+  open problem ("agencia" vs "agência").
+- Niche presets in `config/niches.yml` (Marketing & comunicação, Eventos, Tecnologia da
+  informação) + `Niche` PORO: validated loader, `Niche.find(slug)`, and `#tsquery`, which
+  expands the keywords into one `to_tsquery` expression — phrases as `<->` chains, keywords
+  OR-ed, exclusions negated: `(a | b <-> c) & !(d)`.
+- `Tenders::Search` (app/services): only tenders open for proposals; `q` with
+  `websearch_to_tsquery` (phrases, `-exclusão`, `OR`) ranked by `ts_rank`; `niche`;
+  `states[]`, `modality_ids[]` (arrays or comma-separated strings); `min_value`/`max_value`
+  (accepts "1500", "1.500", "1.500,50", "R$ 1.500"; swapped bounds are fixed);
+  `closing_within`; sort `relevance` (default with text) / `closing` (default otherwise) /
+  `value` (nulls last); offset pagination 25/page (max page 400); `to_params` for links.
+  Garbage params are ignored, never raise. All SQL is bound (no string interpolation).
+- `TendersController#index` (search form + results in a Turbo Frame that advances the URL,
+  pagination keeps filters) and `#show` (all details, countdown "Faltam 3 dias e 2 horas",
+  PNCP and origin-system buttons only for http/https URLs, 404 for unknown ids).
+- Home page is now the search entry point: search box, niche shortcuts, stats (open
+  tenders, closing in 7 days with a link to that filter, last successful sync).
+- Helpers: `brl` ("R$ 1.234,50"), `tender_value` ("Valor sigiloso" for 0/nil), Brazilian
+  dates, `deadline_badge` ("encerra hoje às 18:00" / "amanhã" / "em 3 dias", urgency
+  colors), `time_left`, `format_cnpj`, `agency_scope`, `external_url`.
+- `db/seeds.rb`: 30 fictional tenders (8 per niche + 6 others, 2 closed, some confidential
+  values), idempotent, deadlines relative to now; skipped in production unless
+  `SEED_DEMO_DATA=1`.
+- Plain CSS for the search form, result cards, badges and detail page (mobile-friendly).
+- Tests: Niche (presets, tsquery, invalid config, every preset is valid SQL), Search
+  (accents both ways, plural/stemming, web-search syntax, all fields searched, ranking,
+  every filter, sorting, pagination, normalization, ActionController::Parameters),
+  helpers, tenders and pages controllers, seeds (idempotent; each niche finds exactly its
+  8 demo tenders). Rails suite: 121 runs, 0 failures.
+- Docs: README (status, demo data, layout), ROADMAP, `docs/DEVELOPMENT.md` (search notes).
+
+**Commits**
+- `2550aec` feat(db): fold accents in the tenders search column
+- `9cb86ae` feat: add niche presets loaded from config/niches.yml
+- `322d283` feat: add Tenders::Search query object
+- `942e182` feat: add view helpers for BRL values, deadlines and external links
+- `528fda0` feat: add public tender search and detail pages
+- `dd6e186` feat: make the home page the search entry point
+- `21fde17` feat: seed 30 fictional tenders so the UI works offline
+- `9cc1cc7` test: cast the niche tsquery check to text to silence an unknown OID warning
+- plus this docs commit (plan, log, README, ROADMAP, DEVELOPMENT)
+
+**CI**
+- Every push green (lib tests, Rails tests, RuboCop, Brakeman). The bot regenerated
+  `db/schema.rb` once (`f32f241`) for the new generated column.
+
+**Decisions**
+- Accent folding with `translate()` instead of `unaccent`: `unaccent()` is not immutable
+  (can't be used in a generated column), and an immutable wrapper function or a custom
+  text search configuration would not be kept in `db/schema.rb` — parallel test databases
+  are built from it, so the search column would break there. Switching to `structure.sql`
+  was the alternative; rejected to keep the schema workflow and the CI bot unchanged.
+- Niches build the tsquery text in Ruby (words stripped to letters/digits, so it is always
+  valid syntax) and pass it as a single bind to `to_tsquery`; this avoids building SQL by
+  string interpolation.
+- Search always restricts to tenders open for proposals (the product is about
+  opportunities you can still bid on). Closed tenders remain reachable by direct link.
+- With both `q` and `niche`, both must match and relevance is ranked by `q`.
+- Order of work: accent folding and niches came before the query object because the
+  search needs both; everything else followed the plan order.
+- Niche keywords were checked against the Portuguese stemmer: "publicidade" alone stems
+  to `public` (same as "pública"), and "tendas" stems like "tendo", so those appear only
+  inside phrases. A stem-collision note is in `config/niches.yml` and DEVELOPMENT.md.
+- Seeds use `example.com` origin URLs and no PNCP URL, so demo pages never link to
+  non-existent PNCP pages.
+- Kept the app's default locale (English validation messages); the UI strings and the
+  helpers are Portuguese and do not depend on `rails-i18n` (no new gems).
+
+**Open problems / notes for next days**
+- Free-text search inherits the stemmer's collisions: searching "publicidade" also
+  returns tenders that only say "pública". Possible fix later: rank exact (`simple`
+  config) matches higher, or index a second `simple` tsvector. Logged, not urgent.
+- A query made only of stop words (e.g. "de") returns no results (Postgres drops it).
+- The UI has not been seen in a browser yet (no Rails runtime in the sandbox); it is
+  covered by controller tests only. First local check: `bin/rails db:seed` then `/tenders`.
+- The states filter is a native multi-select; a nicer chip selector can come with the
+  React portal (Phase 2).
+- Nothing moved to the next day.

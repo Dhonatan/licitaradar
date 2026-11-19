@@ -42,8 +42,9 @@ day-by-day log in [`docs/sprint/`](docs/sprint).
 | Record normalization (Brasília times, decimals, CNPJ, public URL) | ✅ done, tested |
 | LGPD: CPF masking in free-text fields | ✅ done, tested |
 | Persistence (`tenders` with Portuguese full-text column) + idempotent sync | ✅ done, tested |
+| Search (accent-insensitive, ranked) + niche presets + public UI | ✅ done, tested |
 | Recurring schedule for the sync (Solid Queue) | 🗓️ planned |
-| Search UI, saved searches, e-mail alerts | 🗓️ planned |
+| Accounts, saved searches, e-mail alerts | 🗓️ planned |
 | JSON API + React portal | 🗓️ planned |
 
 ## Built with
@@ -75,6 +76,12 @@ bin/pncp-probe          # open "Pregão Eletrônico" tenders
 bin/pncp-probe 8 PE     # open "Dispensa" tenders in Pernambuco
 ```
 
+No access to the PNCP? Load 30 fictional tenders and open http://localhost:3000/tenders:
+
+```bash
+bin/rails db:seed
+```
+
 Load open tenders into your local database:
 
 ```bash
@@ -96,6 +103,8 @@ bin/brakeman            # security scan
 ```
 lib/pncp/            PNCP API client, normalizer, PII scrubber (no Rails)
 app/                 Rails app (models, jobs, controllers, views)
+app/services/        Tenders::Sync (PNCP → database) and Tenders::Search (query object)
+config/niches.yml    niche presets (keywords per line of business)
 test/lib/            tests for lib/ — run with bin/test-lib
 test/                Rails tests
 docs/sprint/         day-by-day plan and log of the bootstrap sprint

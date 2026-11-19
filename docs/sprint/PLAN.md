@@ -53,21 +53,21 @@ Default niche presets (configurable later): **Marketing & comunicação**, **Eve
       (idempotency: running twice keeps 3 tenders and updates changed fields; failure is
       recorded in SyncRun).
 
-## Day 2 — Thu, Nov 19 · Search + public UI
+## Day 2 — Thu, Nov 19 · Search + public UI ✅
 
-- [ ] `Tenders::Search` query object: `q` (uses `websearch_to_tsquery('portuguese', q)` and
+- [x] `Tenders::Search` query object: `q` (uses `websearch_to_tsquery('portuguese', q)` and
       ranks with `ts_rank`), filters `states[]`, `modality_ids[]`, `min_value`, `max_value`,
       `closing_within`, `niche`; sort by relevance, closing date or value.
-- [ ] Niche presets in `config/niches.yml` (name, slug, include keywords, exclude keywords)
+- [x] Niche presets in `config/niches.yml` (name, slug, include keywords, exclude keywords)
       + `Niche` PORO loader; a niche expands into an OR query.
-- [ ] `TendersController#index` (search form + results, simple offset pagination 25/page,
+- [x] `TendersController#index` (search form + results, simple offset pagination 25/page,
       Turbo Frame for results) and `#show` (all details, links to PNCP and origin system,
       countdown to deadline).
-- [ ] Home page becomes the search entry point (search box + niche shortcuts + stats:
+- [x] Home page becomes the search entry point (search box + niche shortcuts + stats:
       open tenders, closing this week, last sync time).
-- [ ] View helpers: BRL currency, deadline badges ("encerra em 3 dias"), "valor sigiloso" when 0/nil.
-- [ ] Seeds (`db/seeds.rb`) with ~30 fictional tenders so the UI works offline.
-- [ ] Tests: search query object (keywords with accents, filters, niche), controller tests.
+- [x] View helpers: BRL currency, deadline badges ("encerra em 3 dias"), "valor sigiloso" when 0/nil.
+- [x] Seeds (`db/seeds.rb`) with ~30 fictional tenders so the UI works offline.
+- [x] Tests: search query object (keywords with accents, filters, niche), controller tests.
 
 ## Day 3 — Fri, Nov 20 · Accounts + saved searches
 

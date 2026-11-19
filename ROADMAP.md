@@ -11,12 +11,13 @@ Work is organized in phases. Phase 1 is a one-week bootstrap sprint (day-by-day 
 - [x] LGPD: mask CPF numbers in free text
 - [x] `tenders` table with Portuguese full-text search column
 - [x] Idempotent sync (upsert by PNCP control number) + `SyncRun` audit log
-- [ ] Public search page: keywords, state, modality, value range, "closing soon"
-- [ ] Niche presets (marketing & communication, events, IT services)
+- [x] Public search page: keywords, state, modality, value range, "closing soon"
+- [x] Niche presets (marketing & communication, events, IT services)
 - [ ] Accounts, saved searches and match engine
 - [ ] Daily digest e-mail + recurring jobs (Solid Queue)
 - [ ] JSON API v1 (token auth) for the future portal
-- [ ] Docker image, deploy guide, seeds with fictional data
+- [x] Seeds with fictional data
+- [ ] Docker image, deploy guide
 
 ## Phase 2 — React portal
 
