@@ -6,7 +6,34 @@
     O LicitaRadar acompanha o Portal Nacional de Contratações Públicas (PNCP), filtra o que combina
     com o seu negócio e avisa você antes do prazo de propostas acabar.
   </p>
-  <p class="status-pill">Em construção — primeira versão pública em breve.</p>
+
+  <%= form_with url: tenders_path, method: :get, class: "search-row home-search" do |form| %>
+    <%= form.label :q, "O que você procura?", class: "visually-hidden" %>
+    <%= form.search_field :q, placeholder: "Ex.: agência de publicidade, buffet, software de gestão",
+                              maxlength: Tenders::Search::MAX_QUERY_LENGTH, autocomplete: "off" %>
+    <%= form.button "Buscar licitações", name: nil, class: "button" %>
+  <% end %>
+
+  <ul class="niche-shortcuts" aria-label="Nichos">
+    <% @niches.each do |niche| %>
+      <li><%= link_to niche.name, tenders_path(niche: niche.slug), title: niche.description %></li>
+    <% end %>
+  </ul>
+</section>
+
+<section class="stats" aria-label="Números">
+  <div class="stat" id="stat-open">
+    <span class="stat__value"><%= number_with_delimiter(@open_count, delimiter: ".") %></span>
+    <span class="stat__label">licitações abertas para propostas</span>
+  </div>
+  <div class="stat" id="stat-closing">
+    <span class="stat__value"><%= link_to number_with_delimiter(@closing_this_week_count, delimiter: "."), tenders_path(closing_within: 7) %></span>
+    <span class="stat__label">encerram nos próximos 7 dias</span>
+  </div>
+  <div class="stat" id="stat-sync">
+    <span class="stat__value"><%= @last_sync_at ? date_time_br(@last_sync_at) : "—" %></span>
+    <span class="stat__label"><%= @last_sync_at ? "última sincronização com o PNCP" : "ainda não sincronizado com o PNCP" %></span>
+  </div>
 </section>
 
 <section class="grid">
@@ -16,11 +43,11 @@
   </article>
   <article class="card">
     <h2>2. Busca de verdade</h2>
-    <p>A API do PNCP ignora filtros de palavra-chave. Aqui a busca é feita em português, com filtros por estado, modalidade e valor.</p>
+    <p>A API do PNCP ignora filtros de palavra-chave. Aqui a busca é feita em português, sem se preocupar com acentos, com filtros por estado, modalidade e valor.</p>
   </article>
   <article class="card">
     <h2>3. Alertas</h2>
-    <p>Salve uma busca e receba um resumo por e-mail com as oportunidades novas do dia.</p>
+    <p>Salve uma busca e receba um resumo por e-mail com as oportunidades novas do dia (em breve).</p>
   </article>
 </section>
 
