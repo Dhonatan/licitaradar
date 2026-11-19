@@ -37,7 +37,7 @@ class NicheTest < ActiveSupport::TestCase
 
   test "every default preset produces a query PostgreSQL accepts" do
     Niche.all.each do |niche|
-      assert_nothing_raised { Tender.connection.select_value(Tender.sanitize_sql_array([ "SELECT to_tsquery('portuguese', ?)", niche.tsquery ])) }
+      assert_nothing_raised { Tender.connection.select_value(Tender.sanitize_sql_array([ "SELECT to_tsquery('portuguese', ?)::text", niche.tsquery ])) }
     end
   end
 
