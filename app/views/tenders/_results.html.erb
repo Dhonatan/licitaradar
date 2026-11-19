@@ -1,0 +1,19 @@
+<div class="results-summary">
+  <p>
+    <strong><%= number_with_delimiter(search.total_count, delimiter: ".") %></strong>
+    <%= search.total_count == 1 ? "licitação aberta encontrada" : "licitações abertas encontradas" %><%= " para “#{search.q}”" if search.q %><%= " no nicho #{search.niche.name}" if search.niche %>.
+  </p>
+</div>
+
+<% if search.results.any? %>
+  <ol class="tender-list">
+    <%= render partial: "tenders/tender", collection: search.results %>
+  </ol>
+
+  <%= render "tenders/pagination", search: search %>
+<% else %>
+  <div class="empty-state">
+    <p>Nenhuma licitação aberta combina com essa busca.</p>
+    <p class="muted">Tente menos palavras, outro nicho ou remova alguns filtros.</p>
+  </div>
+<% end %>

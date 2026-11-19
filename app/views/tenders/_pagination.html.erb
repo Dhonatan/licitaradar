@@ -1,0 +1,11 @@
+<% if search.total_pages > 1 %>
+  <nav class="pagination" aria-label="Paginação">
+    <% if search.previous_page %>
+      <%= link_to "← Anterior", tenders_path(search.to_params(page: search.previous_page)), rel: "prev" %>
+    <% end %>
+    <span>Página <%= search.page %> de <%= search.total_pages %></span>
+    <% if search.next_page %>
+      <%= link_to "Próxima →", tenders_path(search.to_params(page: search.next_page)), rel: "next" %>
+    <% end %>
+  </nav>
+<% end %>

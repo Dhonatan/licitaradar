@@ -74,4 +74,16 @@ class TendersHelperTest < ActionView::TestCase
     assert_nil external_url("not a url")
     assert_nil external_url(nil)
   end
+
+  test "agency_scope names the sphere and power" do
+    assert_equal "Municipal · Executivo", agency_scope(Tender.new(agency_sphere: "M", agency_power: "E"))
+    assert_equal "Estadual", agency_scope(Tender.new(agency_sphere: "E", agency_power: "N"))
+    assert_nil agency_scope(Tender.new)
+  end
+
+  test "format_cnpj adds the usual punctuation" do
+    assert_equal "00.000.000/0001-91", format_cnpj("00000000000191")
+    assert_equal "123", format_cnpj("123")
+    assert_nil format_cnpj(nil)
+  end
 end

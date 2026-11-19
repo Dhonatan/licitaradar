@@ -1,0 +1,81 @@
+<% object = @tender.object_description.presence || "Objeto não informado" %>
+<% content_for :title, "#{object.truncate(70)} — LicitaRadar" %>
+
+<p class="back-link"><%= link_to "← Voltar para a busca", tenders_path %></p>
+
+<article class="tender-detail">
+  <header>
+    <p class="eyebrow">
+      <%= tender_modality(@tender) %>
+      <% if @tender.purchase_number.present? %>· nº <%= [ @tender.purchase_number, @tender.year ].compact.join("/") %><% end %>
+    </p>
+    <h1><%= object %></h1>
+    <p class="muted">
+      <%= @tender.agency_name %>
+      <% if (location = tender_location(@tender)) %>· <%= location %><% end %>
+    </p>
+  </header>
+
+  <section class="deadline-box deadline-box--<%= deadline_level(@tender.proposals_close_at) %>" aria-label="Prazo para propostas">
+    <% if (remaining = time_left(@tender.proposals_close_at)) %>
+      <p class="countdown">Faltam <strong><%= remaining %></strong> para o fim do prazo de propostas</p>
+      <p>Propostas até <time datetime="<%= @tender.proposals_close_at.iso8601 %>"><%= date_time_br(@tender.proposals_close_at) %></time></p>
+    <% elsif @tender.proposals_close_at %>
+      <p class="countdown">Prazo de propostas encerrado</p>
+      <p>Encerrou em <time datetime="<%= @tender.proposals_close_at.iso8601 %>"><%= date_time_br(@tender.proposals_close_at) %></time></p>
+    <% else %>
+      <p class="countdown">Prazo de propostas não informado</p>
+    <% end %>
+  </section>
+
+  <div class="actions">
+    <% if (pncp_url = external_url(@tender.pncp_url)) %>
+      <%= link_to "Ver edital no PNCP", pncp_url, class: "button", target: "_blank", rel: "noopener noreferrer" %>
+    <% end %>
+    <% if (origin_url = external_url(@tender.origin_url)) %>
+      <%= link_to "Abrir no sistema de origem", origin_url, class: "button button--secondary", target: "_blank", rel: "noopener noreferrer" %>
+    <% end %>
+  </div>
+
+  <%
+    details = {
+      "Valor estimado" => tender_value(@tender),
+      "Situação" => @tender.status_name,
+      "Modalidade" => tender_modality(@tender),
+      "Modo de disputa" => @tender.dispute_mode_name,
+      "Registro de preços" => (@tender.price_registration ? "Sim" : "Não"),
+      "Abertura das propostas" => date_time_br(@tender.proposals_open_at),
+      "Encerramento das propostas" => date_time_br(@tender.proposals_close_at),
+      "Publicado no PNCP" => date_time_br(@tender.published_at),
+      "Atualizado no PNCP" => date_time_br(@tender.source_updated_at),
+      "Órgão" => @tender.agency_name,
+      "CNPJ do órgão" => format_cnpj(@tender.agency_cnpj),
+      "Esfera / poder" => agency_scope(@tender),
+      "Unidade compradora" => [ @tender.unit_code, @tender.unit_name ].compact_blank.join(" — ").presence,
+      "Município" => tender_location(@tender),
+      "Número da compra" => @tender.purchase_number,
+      "Processo" => @tender.process_number,
+      "Nº de controle PNCP" => @tender.pncp_control_number
+    }.compact_blank
+  %>
+  <dl class="details">
+    <% details.each do |label, value| %>
+      <div>
+        <dt><%= label %></dt>
+        <dd><%= value %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <% if @tender.additional_info.present? %>
+    <section>
+      <h2>Informações complementares</h2>
+      <%= simple_format(@tender.additional_info) %>
+    </section>
+  <% end %>
+
+  <p class="muted small">
+    Dados públicos do PNCP, atualizados pela última vez aqui em <%= date_time_br(@tender.last_seen_at || @tender.updated_at) %>.
+    Confira sempre o edital oficial antes de enviar uma proposta.
+  </p>
+</article>

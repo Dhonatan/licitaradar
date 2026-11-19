@@ -1,0 +1,54 @@
+<%= form_with url: tenders_path, method: :get, class: "search-form", data: { turbo_frame: "results", turbo_action: "advance" } do |form| %>
+  <div class="search-row">
+    <%= form.label :q, "O que você procura?", class: "visually-hidden" %>
+    <%= form.search_field :q, value: search.q, placeholder: "Ex.: agência de publicidade, buffet, software de gestão",
+                              maxlength: Tenders::Search::MAX_QUERY_LENGTH, autocomplete: "off" %>
+    <%= form.button "Buscar", name: nil, class: "button" %>
+  </div>
+  <p class="hint">Use aspas para frases exatas ("organização de eventos"), <code>-palavra</code> para excluir e <code>OR</code> para alternativas. Acentos não importam.</p>
+
+  <div class="filters">
+    <div class="field">
+      <%= form.label :niche, "Nicho" %>
+      <%= form.select :niche, Niche.all.map { |niche| [ niche.name, niche.slug ] }, { include_blank: "Todos os nichos", selected: search.niche&.slug } %>
+    </div>
+
+    <div class="field">
+      <%= form.label :states, "Estados (UF)" %>
+      <%= form.select :states, BrazilianStates::ALL.map { |code, name| [ "#{code} — #{name}", code ] },
+                      { selected: search.states, include_hidden: false }, { multiple: true, size: 4 } %>
+    </div>
+
+    <div class="field">
+      <%= form.label :closing_within, "Prazo para propostas" %>
+      <%= form.select :closing_within, Tenders::Search::CLOSING_WITHIN_OPTIONS.map { |days| [ "Encerra em até #{days} dias", days ] },
+                      { include_blank: "Qualquer prazo", selected: search.closing_within } %>
+    </div>
+
+    <div class="field field--range">
+      <span class="label">Valor estimado (R$)</span>
+      <%= form.text_field :min_value, value: search.to_params[:min_value], placeholder: "mínimo", inputmode: "decimal", "aria-label": "Valor mínimo" %>
+      <%= form.text_field :max_value, value: search.to_params[:max_value], placeholder: "máximo", inputmode: "decimal", "aria-label": "Valor máximo" %>
+    </div>
+
+    <fieldset class="field field--modalities">
+      <legend>Modalidade</legend>
+      <% Pncp::Modalities::COMPETITIVE.each do |modality_id| %>
+        <label>
+          <%= check_box_tag "modality_ids[]", modality_id, search.modality_ids.include?(modality_id), id: "modality_#{modality_id}" %>
+          <%= Pncp::Modalities.name_for(modality_id) %>
+        </label>
+      <% end %>
+    </fieldset>
+
+    <div class="field">
+      <%= form.label :sort, "Ordenar por" %>
+      <%= form.select :sort, [ [ "Relevância", "relevance" ], [ "Prazo mais próximo", "closing" ], [ "Maior valor", "value" ] ], { selected: search.sort } %>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= form.button "Aplicar filtros", name: nil, class: "button" %>
+    <%= link_to "Limpar", tenders_path, class: "button button--secondary", data: { turbo_frame: "_top" } %>
+  </div>
+<% end %>

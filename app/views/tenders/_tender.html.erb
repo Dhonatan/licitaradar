@@ -1,0 +1,15 @@
+<% card_title = (tender.object_description.presence || "Objeto não informado").truncate(220) %>
+<li class="tender-card" id="<%= dom_id(tender) %>">
+  <div class="tender-card__meta">
+    <%= deadline_badge(tender.proposals_close_at) %>
+    <span class="muted"><%= tender_modality(tender) %></span>
+  </div>
+  <h2 class="tender-card__title">
+    <%= link_to card_title, tender_path(tender), data: { turbo_frame: "_top" } %>
+  </h2>
+  <p class="muted">
+    <%= tender.agency_name %>
+    <% if (location = tender_location(tender)) %>· <%= location %><% end %>
+  </p>
+  <p class="tender-card__value"><%= tender_value(tender) %></p>
+</li>

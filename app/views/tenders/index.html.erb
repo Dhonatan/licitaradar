@@ -1,0 +1,9 @@
+<% content_for :title, "Buscar licitações abertas — LicitaRadar" %>
+
+<h1 class="page-title">Licitações abertas</h1>
+
+<%= render "search_form", search: @search %>
+
+<%= turbo_frame_tag "results", data: { turbo_action: "advance" } do %>
+  <%= render "results", search: @search %>
+<% end %>

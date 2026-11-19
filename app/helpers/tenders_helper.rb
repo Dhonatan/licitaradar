@@ -1,4 +1,7 @@
 module TendersHelper
+  SPHERES = { "F" => "Federal", "E" => "Estadual", "M" => "Municipal", "D" => "Distrital" }.freeze
+  POWERS = { "E" => "Executivo", "L" => "Legislativo", "J" => "Judiciário" }.freeze
+
   # 1234.5 => "R$ 1.234,50"
   def brl(amount)
     number_to_currency(amount, unit: "R$", separator: ",", delimiter: ".", format: "%u %n", precision: 2)
@@ -66,6 +69,19 @@ module TendersHelper
 
   def tender_modality(tender)
     tender.modality_name.presence || (Pncp::Modalities.name_for(tender.modality_id) if tender.modality_id)
+  end
+
+  # "Municipal · Executivo"
+  def agency_scope(tender)
+    [ SPHERES[tender.agency_sphere], POWERS[tender.agency_power] ].compact.join(" · ").presence
+  end
+
+  # "00000000000191" => "00.000.000/0001-91"
+  def format_cnpj(cnpj)
+    digits = cnpj.to_s.gsub(/\D/, "")
+    return cnpj.presence if digits.length != 14
+
+    "#{digits[0, 2]}.#{digits[2, 3]}.#{digits[5, 3]}/#{digits[8, 4]}-#{digits[12, 2]}"
   end
 
   # Only http(s) URLs are rendered as links (the origin URL comes from third-party systems).
