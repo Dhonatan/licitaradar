@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_18_140200) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -65,7 +65,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_140200) do
     t.datetime "last_seen_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.virtual "searchable", type: :tsvector, as: "to_tsvector('portuguese'::regconfig, ((((((COALESCE(object_description, ''::text) || ' '::text) || COALESCE(additional_info, ''::text)) || ' '::text) || (COALESCE(agency_name, ''::character varying))::text) || ' '::text) || (COALESCE(unit_name, ''::character varying))::text))", stored: true
+    t.virtual "searchable", type: :tsvector, as: "to_tsvector('portuguese'::regconfig, translate(((((((COALESCE(object_description, ''::text) || ' '::text) || COALESCE(additional_info, ''::text)) || ' '::text) || (COALESCE(agency_name, ''::character varying))::text) || ' '::text) || (COALESCE(unit_name, ''::character varying))::text), 'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ'::text, 'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN'::text))", stored: true
     t.index ["modality_id"], name: "index_tenders_on_modality_id"
     t.index ["pncp_control_number"], name: "index_tenders_on_pncp_control_number", unique: true
     t.index ["proposals_close_at"], name: "index_tenders_on_proposals_close_at"
