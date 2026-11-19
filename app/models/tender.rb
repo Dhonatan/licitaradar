@@ -4,6 +4,11 @@ class Tender < ApplicationRecord
   # situacaoCompraId 1 = "Divulgada no PNCP" (published and active).
   PUBLISHED_STATUS_ID = 1
 
+  # Accent folding shared by the `searchable` column (see the FoldAccentsInTendersSearchable
+  # migration) and search queries, so "agencia" and "agência" are the same word.
+  ACCENTED = "áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ"
+  UNACCENTED = "aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN"
+
   validates :pncp_control_number, presence: true, uniqueness: true
   validates :modality_id, inclusion: { in: Pncp::Modalities::ALL.keys }, allow_nil: true
   validates :state, format: { with: /\A[A-Z]{2}\z/ }, allow_nil: true
@@ -24,6 +29,10 @@ class Tender < ApplicationRecord
     max = max.presence
     where(estimated_value: min..max) if min || max
   }
+
+  def self.fold_accents(text)
+    text.to_s.tr(ACCENTED, UNACCENTED)
+  end
 
   def open_for_proposals?
     status_id == PUBLISHED_STATUS_ID && proposals_close_at.present? && proposals_close_at.future?

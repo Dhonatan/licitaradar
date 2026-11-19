@@ -104,4 +104,29 @@ class TenderTest < ActiveSupport::TestCase
     assert Tender.where("searchable @@ plainto_tsquery('portuguese', ?)", "publicidade").exists?
     assert_not Tender.where("searchable @@ plainto_tsquery('portuguese', ?)", "asfalto").exists?
   end
+
+  test "searchable column ignores accents on both sides" do
+    agencia = create_tender(object_description: "Contratação de AGÊNCIA de comunicação")
+    create_tender(object_description: "Aquisição de material de limpeza")
+
+    [ "agencia", "agência", "Comunicacao" ].each do |term|
+      result = Tender.where("searchable @@ websearch_to_tsquery('portuguese', ?)", Tender.fold_accents(term))
+
+      assert_equal [ agencia ], result.to_a, "expected #{term.inspect} to match"
+    end
+  end
+
+  test "fold_accents strips Portuguese diacritics and keeps everything else" do
+    assert_equal "Licitacao publica sao joao", Tender.fold_accents("Licitação pública são joão")
+    assert_equal "ACAO", Tender.fold_accents("AÇÃO")
+    assert_equal "", Tender.fold_accents(nil)
+    assert_equal Tender::ACCENTED.length, Tender::UNACCENTED.length
+  end
+
+  test "accent table matches the one used by the searchable column" do
+    require Rails.root.join("db/migrate/20261119130000_fold_accents_in_tenders_searchable")
+
+    assert_equal FoldAccentsInTendersSearchable::ACCENTED, Tender::ACCENTED
+    assert_equal FoldAccentsInTendersSearchable::UNACCENTED, Tender::UNACCENTED
+  end
 end
