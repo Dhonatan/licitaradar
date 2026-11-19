@@ -1,0 +1,87 @@
+# Niche presets: one-click searches for a line of business (see app/models/niche.rb).
+#
+# - include: words or phrases; a tender matches if ANY of them appears in its object,
+#   additional info, agency or unit name. Phrases must appear in that order.
+# - exclude: tenders matching ANY of these are dropped (known false positives).
+#
+# Matching uses Portuguese stemming and ignores accents, so "evento" also matches
+# "eventos". Avoid single words whose stem is too broad: "publicidade" alone stems to
+# "public" and would match every "licitação pública", and "tendas" stems like "tendo"
+# — use phrases instead.
+
+- slug: marketing-comunicacao
+  name: Marketing & comunicação
+  description: Publicidade, comunicação institucional, redes sociais, design e audiovisual.
+  include:
+    - agência de publicidade
+    - serviços de publicidade
+    - publicidade e propaganda
+    - publicidade institucional
+    - publicidade legal
+    - campanha publicitária
+    - peças publicitárias
+    - propaganda
+    - marketing
+    - comunicação institucional
+    - comunicação social
+    - comunicação visual
+    - comunicação digital
+    - assessoria de imprensa
+    - redes sociais
+    - mídias sociais
+    - design gráfico
+    - produção audiovisual
+    - produção de vídeos
+  exclude:
+    - radiocomunicação
+    - telecomunicação
+    - comunicação de dados
+
+- slug: eventos
+  name: Eventos
+  description: Organização e produção de eventos, cerimonial, estrutura, som e buffet.
+  include:
+    - eventos
+    - cerimonial
+    - buffet
+    - coffee break
+    - sonorização
+    - iluminação cênica
+    - palco
+    - locação de tendas
+    - montagem de tendas
+    - estrutura para eventos
+    - show
+    - shows
+    - apresentações artísticas
+    - festividades
+    - festival
+  exclude:
+    - eventos adversos
+
+- slug: tecnologia-informacao
+  name: Tecnologia da informação
+  description: Software, sistemas, infraestrutura, suporte e equipamentos de informática.
+  include:
+    - tecnologia da informação
+    - informática
+    - software
+    - softwares
+    - licenças de uso
+    - sistema de gestão
+    - sistemas de informação
+    - desenvolvimento de sistemas
+    - fábrica de software
+    - computação em nuvem
+    - data center
+    - cabeamento estruturado
+    - rede lógica
+    - segurança da informação
+    - suporte técnico de informática
+    - computadores
+    - notebook
+    - notebooks
+    - outsourcing de impressão
+  exclude:
+    - sistema de abastecimento
+    - sistema de esgotamento
