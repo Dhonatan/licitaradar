@@ -11,6 +11,7 @@ class SavedSearch < ApplicationRecord
   FILTER_KEYS = %w[ states modality_ids min_value max_value closing_within ].freeze
 
   belongs_to :user
+  has_many :notifications, dependent: :delete_all
 
   FILTER_KEYS.each do |key|
     define_method(key) { filter_values[key] }
@@ -63,8 +64,8 @@ class SavedSearch < ApplicationRecord
     end
 
     def normalize_criteria
-      search = Tenders::Search.new(q: query, states: states, modality_ids: modality_ids, min_value: min_value,
-                                   max_value: max_value, closing_within: closing_within)
+      search = Tenders::Search.new({ q: query, states: states, modality_ids: modality_ids, min_value: min_value,
+                                     max_value: max_value, closing_within: closing_within })
       self.query = search.q
       self.niche_slug = niche_slug.to_s.strip.presence
       self.filters = search.to_params.slice(*FILTER_KEYS.map(&:to_sym)).deep_stringify_keys
