@@ -9,6 +9,8 @@ class Tender < ApplicationRecord
   ACCENTED = "áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ"
   UNACCENTED = "aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN"
 
+  has_many :notifications, dependent: :delete_all
+
   validates :pncp_control_number, presence: true, uniqueness: true
   validates :modality_id, inclusion: { in: Pncp::Modalities::ALL.keys }, allow_nil: true
   validates :state, format: { with: /\A[A-Z]{2}\z/ }, allow_nil: true
