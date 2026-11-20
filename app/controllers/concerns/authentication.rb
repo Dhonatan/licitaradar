@@ -33,7 +33,8 @@ module Authentication
     end
 
     def request_authentication
-      session[:return_to_after_authenticating] = request.url if request.get?
+      # Only pages that can be opened again with a GET are worth returning to.
+      session[:return_to_after_authenticating] = request.url if %w[ GET HEAD ].include?(request.request_method)
       redirect_to new_session_path, alert: "Entre na sua conta para continuar."
     end
 
