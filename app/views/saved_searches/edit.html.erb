@@ -1,0 +1,6 @@
+<% content_for :title, "Editar busca — LicitaRadar" %>
+
+<p class="back-link"><%= link_to "← Minhas buscas", saved_searches_path %></p>
+<h1 class="page-title">Editar busca</h1>
+
+<%= render "form", saved_search: @saved_search %>

@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   resources :passwords, param: :token, only: %i[ new create edit update ]
 
   resources :tenders, only: %i[ index show ]
+  resources :saved_searches, except: :show
 
   root "pages#home"
 end

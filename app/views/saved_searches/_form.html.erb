@@ -1,0 +1,57 @@
+<%= render "shared/form_errors", record: saved_search %>
+
+<%= form_with model: saved_search, class: "search-form saved-search-form" do |form| %>
+  <div class="field">
+    <%= form.label :name, "Nome da busca" %>
+    <%= form.text_field :name, maxlength: SavedSearch::MAX_NAME_LENGTH, placeholder: "Ex.: Eventos no Nordeste" %>
+  </div>
+
+  <div class="filters">
+    <div class="field">
+      <%= form.label :query, "Palavras-chave" %>
+      <%= form.text_field :query, maxlength: Tenders::Search::MAX_QUERY_LENGTH, placeholder: "Ex.: buffet, \"agência de publicidade\"" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :niche_slug, "Nicho" %>
+      <%= form.select :niche_slug, Niche.all.map { |niche| [ niche.name, niche.slug ] }, { include_blank: "Todos os nichos" } %>
+    </div>
+
+    <div class="field">
+      <%= form.label :states, "Estados (UF)" %>
+      <%= form.select :states, BrazilianStates::ALL.map { |code, name| [ "#{code} — #{name}", code ] },
+                      { selected: saved_search.states }, { multiple: true, size: 4 } %>
+    </div>
+
+    <div class="field">
+      <%= form.label :closing_within, "Prazo para propostas" %>
+      <%= form.select :closing_within, Tenders::Search::CLOSING_WITHIN_OPTIONS.map { |days| [ "Encerra em até #{days} dias", days ] },
+                      { include_blank: "Qualquer prazo", selected: saved_search.closing_within } %>
+    </div>
+
+    <div class="field field--range">
+      <span class="label">Valor estimado (R$)</span>
+      <%= form.text_field :min_value, value: saved_search.min_value, placeholder: "mínimo", inputmode: "decimal", "aria-label": "Valor mínimo" %>
+      <%= form.text_field :max_value, value: saved_search.max_value, placeholder: "máximo", inputmode: "decimal", "aria-label": "Valor máximo" %>
+    </div>
+
+    <fieldset class="field field--modalities">
+      <legend>Modalidade</legend>
+      <%= form.collection_check_boxes :modality_ids, Pncp::Modalities::COMPETITIVE, :itself, ->(id) { Pncp::Modalities.name_for(id) },
+                                      { checked: Array(saved_search.modality_ids).map(&:to_i) } do |box| %>
+        <%= box.label { box.check_box + " " + box.text } %>
+      <% end %>
+    </fieldset>
+  </div>
+
+  <fieldset class="field field--options">
+    <legend>Alertas</legend>
+    <label><%= form.check_box :notify_daily %> Receber por e-mail as licitações novas desta busca (resumo diário)</label>
+    <label><%= form.check_box :active %> Busca ativa (desmarque para pausar sem excluir)</label>
+  </fieldset>
+
+  <div class="form-actions">
+    <%= form.submit "Salvar busca", class: "button" %>
+    <%= link_to "Cancelar", saved_searches_path, class: "button button--secondary" %>
+  </div>
+<% end %>

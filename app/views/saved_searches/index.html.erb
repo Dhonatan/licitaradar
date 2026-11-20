@@ -1,0 +1,47 @@
+<% content_for :title, "Minhas buscas — LicitaRadar" %>
+
+<div class="page-header">
+  <h1 class="page-title">Minhas buscas</h1>
+  <%= link_to "Nova busca", tenders_path, class: "button button--secondary" %>
+</div>
+
+<% if @saved_searches.any? %>
+  <ul class="saved-search-list">
+    <% @saved_searches.each do |saved_search| %>
+      <li class="saved-search-card" id="<%= dom_id(saved_search) %>">
+        <div class="saved-search-card__header">
+          <h2><%= saved_search.name %></h2>
+          <% if !saved_search.active? %>
+            <span class="badge badge--closed">pausada</span>
+          <% elsif saved_search.notify_daily? %>
+            <span class="badge badge--ok">alerta diário</span>
+          <% else %>
+            <span class="badge badge--unknown">sem alertas</span>
+          <% end %>
+        </div>
+
+        <ul class="criteria">
+          <% saved_search_criteria(saved_search).each do |criterion| %>
+            <li><%= criterion %></li>
+          <% end %>
+        </ul>
+
+        <div class="actions">
+          <% open_count = saved_search.search.total_count %>
+          <%= link_to "Ver #{open_count} #{open_count == 1 ? "licitação aberta" : "licitações abertas"}",
+                      tenders_path(saved_search.search_params), class: "button" %>
+          <%= link_to "Editar", edit_saved_search_path(saved_search), class: "button button--secondary" %>
+          <%= button_to "Excluir", saved_search_path(saved_search), method: :delete, class: "link-button link-button--danger",
+                        form_class: "inline-form", form: { data: { turbo_confirm: "Excluir a busca “#{saved_search.name}”?" } } %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+  <p class="muted small">Você pode salvar até <%= SavedSearch::MAX_PER_USER %> buscas.</p>
+<% else %>
+  <div class="empty-state">
+    <p>Você ainda não salvou nenhuma busca.</p>
+    <p class="muted">Faça uma busca de licitações e clique em “Salvar esta busca” para receber alertas das novas oportunidades.</p>
+    <p><%= link_to "Buscar licitações", tenders_path, class: "button" %></p>
+  </div>
+<% end %>
