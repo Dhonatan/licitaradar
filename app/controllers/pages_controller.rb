@@ -1,4 +1,6 @@
 class PagesController < ApplicationController
+  allow_unauthenticated_access
+
   def home
     @niches = Niche.all
     @open_count = Tender.open_for_proposals.count

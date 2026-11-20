@@ -1,0 +1,20 @@
+<% content_for :title, "Esqueceu a senha? — LicitaRadar" %>
+
+<section class="auth-card">
+  <h1 class="page-title">Esqueceu a senha?</h1>
+  <p class="muted">Informe o e-mail da sua conta e enviaremos um link para criar uma nova senha.</p>
+
+  <%= form_with url: passwords_path, class: "stacked-form" do |form| %>
+    <div class="field">
+      <%= form.label :email_address, "E-mail" %>
+      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username",
+                                           placeholder: "voce@empresa.com.br" %>
+    </div>
+
+    <div class="form-actions">
+      <%= form.submit "Enviar link", class: "button" %>
+    </div>
+  <% end %>
+
+  <p class="auth-links"><%= link_to "Voltar para o login", new_session_path %></p>
+</section>

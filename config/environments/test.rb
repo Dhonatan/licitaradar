@@ -4,7 +4,9 @@ Rails.application.configure do
 
   config.public_file_server.headers = { "cache-control" => "public, max-age=3600" }
   config.consider_all_requests_local = true
-  config.cache_store = :null_store
+  # A real (in-memory) store so rate limits can be tested; integration tests clear it
+  # before each test (see test/test_helper.rb).
+  config.cache_store = :memory_store
   config.action_dispatch.show_exceptions = :rescuable
   config.action_controller.allow_forgery_protection = false
 

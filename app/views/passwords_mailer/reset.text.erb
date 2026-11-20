@@ -1,0 +1,8 @@
+Olá,
+
+Recebemos um pedido para criar uma nova senha para a sua conta no LicitaRadar.
+
+Crie uma nova senha neste link:
+<%= edit_password_url(@user.password_reset_token) %>
+
+O link vale por <%= @expires_in_minutes %> minutos. Se você não pediu uma nova senha, ignore este e-mail: a senha atual continua valendo.

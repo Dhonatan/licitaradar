@@ -124,3 +124,32 @@ input[type="search"], input[type="text"], select {
 @media (max-width: 600px) {
   .search-row { flex-direction: column; }
 }
+
+/* Flash messages */
+.flash { border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 1.25rem; font-weight: 600; }
+.flash--notice { background: #e6f4f1; color: var(--accent); }
+.flash--alert { background: #fde8e8; color: #a61b1b; }
+
+/* Accounts */
+.site-nav { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.inline-form { display: inline; margin: 0; }
+.link-button {
+  background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: var(--accent); cursor: pointer;
+}
+.link-button:hover { text-decoration: underline; }
+.link-button--danger { color: #a61b1b; }
+.auth-card {
+  max-width: 420px; margin: 0 auto; background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 1.5rem;
+}
+.auth-links { margin: 1rem 0 0; font-size: 0.875rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+.stacked-form { display: grid; gap: 1rem; }
+.stacked-form .form-actions { margin-top: 0; }
+.stacked-form .hint { margin: 0; }
+input[type="email"], input[type="password"], input[type="number"] {
+  font: inherit; padding: 0.5rem 0.65rem; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--card); color: var(--ink); max-width: 100%; box-sizing: border-box;
+}
+.form-errors { background: #fde8e8; color: #a61b1b; border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 1rem; }
+.form-errors p { margin: 0; }
+.form-errors ul { margin: 0.25rem 0 0; padding-left: 1.25rem; }

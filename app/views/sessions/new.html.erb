@@ -1,0 +1,26 @@
+<% content_for :title, "Entrar — LicitaRadar" %>
+
+<section class="auth-card">
+  <h1 class="page-title">Entrar</h1>
+
+  <%= form_with url: session_path, class: "stacked-form" do |form| %>
+    <div class="field">
+      <%= form.label :email_address, "E-mail" %>
+      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username",
+                                           placeholder: "voce@empresa.com.br", value: params[:email_address] %>
+    </div>
+
+    <div class="field">
+      <%= form.label :password, "Senha" %>
+      <%= form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72 %>
+    </div>
+
+    <div class="form-actions">
+      <%= form.submit "Entrar", class: "button" %>
+    </div>
+  <% end %>
+
+  <p class="auth-links">
+    <%= link_to "Esqueceu a senha?", new_password_path %>
+  </p>
+</section>
