@@ -69,18 +69,18 @@ Default niche presets (configurable later): **Marketing & comunicação**, **Eve
 - [x] Seeds (`db/seeds.rb`) with ~30 fictional tenders so the UI works offline.
 - [x] Tests: search query object (keywords with accents, filters, niche), controller tests.
 
-## Day 3 — Fri, Nov 20 · Accounts + saved searches
+## Day 3 — Fri, Nov 20 · Accounts + saved searches ✅
 
-- [ ] Authentication the Rails 8 way (hand-written equivalent of `bin/rails generate authentication`):
+- [x] Authentication the Rails 8 way (hand-written equivalent of `bin/rails generate authentication`):
       `User` (email_address, password_digest), `Session`, `Authentication` concern,
       sessions + passwords controllers, password reset mailer. Rate-limit login.
-- [ ] Sign-up page.
-- [ ] `SavedSearch` (user, name, query, filters jsonb, niche slug, active, notify_daily,
+- [x] Sign-up page.
+- [x] `SavedSearch` (user, name, query, filters jsonb, niche slug, active, notify_daily,
       last_notified_at) + CRUD UI; "Salvar esta busca" button on the results page.
-- [ ] `SavedSearches::Matcher`: tenders matching a saved search **published or updated since
+- [x] `SavedSearches::Matcher`: tenders matching a saved search **published or updated since
       last notification**, reusing `Tenders::Search`.
-- [ ] `Notification` (saved_search, tender, sent_at) with unique index to avoid duplicate alerts.
-- [ ] Tests: auth flows, saved search CRUD, matcher (new vs already notified).
+- [x] `Notification` (saved_search, tender, sent_at) with unique index to avoid duplicate alerts.
+- [x] Tests: auth flows, saved search CRUD, matcher (new vs already notified).
 
 ## Day 4 — Sat, Nov 21 · Alerts + API
 

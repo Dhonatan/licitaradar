@@ -44,7 +44,8 @@ day-by-day log in [`docs/sprint/`](docs/sprint).
 | Persistence (`tenders` with Portuguese full-text column) + idempotent sync | ✅ done, tested |
 | Search (accent-insensitive, ranked) + niche presets + public UI | ✅ done, tested |
 | Recurring schedule for the sync (Solid Queue) | 🗓️ planned |
-| Accounts, saved searches, e-mail alerts | 🗓️ planned |
+| Accounts (sign-up, login, password reset) + saved searches + match engine | ✅ done, tested |
+| Daily e-mail alerts | 🗓️ planned |
 | JSON API + React portal | 🗓️ planned |
 
 ## Built with
@@ -104,6 +105,8 @@ bin/brakeman            # security scan
 lib/pncp/            PNCP API client, normalizer, PII scrubber (no Rails)
 app/                 Rails app (models, jobs, controllers, views)
 app/services/        Tenders::Sync (PNCP → database) and Tenders::Search (query object)
+app/services/saved_searches/  SavedSearches::Matcher (what a saved search should alert about)
+config/locales/      Portuguese UI messages (English fallback)
 config/niches.yml    niche presets (keywords per line of business)
 test/lib/            tests for lib/ — run with bin/test-lib
 test/                Rails tests
@@ -115,6 +118,8 @@ docs/sprint/         day-by-day plan and log of the bootstrap sprint
 - Only **public** procurement data from the PNCP is collected (open government data,
   Lei 14.133/2021, art. 174).
 - CPF numbers found in free-text fields are masked before storage.
+- Account passwords are stored only as bcrypt hashes; login, sign-up and password reset
+  requests are rate limited.
 - The repository contains **only fictional sample data** (see `test/fixtures`).
 
 ## Contributing

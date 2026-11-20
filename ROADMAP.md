@@ -13,7 +13,7 @@ Work is organized in phases. Phase 1 is a one-week bootstrap sprint (day-by-day 
 - [x] Idempotent sync (upsert by PNCP control number) + `SyncRun` audit log
 - [x] Public search page: keywords, state, modality, value range, "closing soon"
 - [x] Niche presets (marketing & communication, events, IT services)
-- [ ] Accounts, saved searches and match engine
+- [x] Accounts, saved searches and match engine
 - [ ] Daily digest e-mail + recurring jobs (Solid Queue)
 - [ ] JSON API v1 (token auth) for the future portal
 - [x] Seeds with fictional data

@@ -27,6 +27,9 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
 - CI regenerates `Gemfile.lock` and `db/schema.rb` and commits them back to `main` as
   `github-actions[bot]`. **Always `git pull --rebase origin main` before starting work.**
 - Do not hand-edit `db/schema.rb` or `Gemfile.lock`; write migrations / edit the Gemfile.
+- Adding a gem: edit the `Gemfile` only. Every CI job runs `bundle lock` before
+  installing (setup-ruby uses deployment mode when a lockfile exists, which would reject a
+  changed Gemfile), and the Rails job commits the updated `Gemfile.lock`.
 
 ## Domain notes
 
@@ -52,3 +55,26 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
   new keywords with `SELECT to_tsvector('portuguese', 'palavra')` — e.g. "publicidade"
   and "pública" share the stem `public`, so niches use phrases instead of that word.
 - `bin/rails db:seed` loads 30 fictional tenders (idempotent) for working offline.
+
+## Accounts and saved searches
+
+- Authentication is the Rails 8 generator's design, written by hand: `User`
+  (`has_secure_password`, e-mail normalized to lowercase), `Session` rows referenced by a
+  signed http-only cookie, `Current.user`, and the `Authentication` concern. **Every
+  controller requires login by default**; public ones call `allow_unauthenticated_access`.
+- Login, sign-up and password-reset requests are rate limited (10 per 3 minutes per IP)
+  with Rails' `rate_limit`, which counts in `Rails.cache`. Tests use a memory store that is
+  cleared before every integration test; in production the cache must be shared by all
+  app processes (the default file store is, on a single host).
+- Integration tests sign in with `sign_in_as(user)` (no login request, so no rate limit);
+  `create_user` and `create_open_tender` live in `test/test_helpers/`.
+- The default locale is `pt-BR` (`config/locales/pt-BR.yml`: validation messages and
+  attribute names). Missing keys fall back to Rails' English, so number/date helpers keep
+  their explicit formats — add Portuguese keys only for what the UI shows.
+- `SavedSearch` stores the `Tenders::Search` params: `query` (= `q`), `niche_slug`
+  (= `niche`) and the other filters in `filters` jsonb. They are normalized by
+  `Tenders::Search` before validation; `saved_search.search` rebuilds the search.
+- `SavedSearches::Matcher` = matches of the saved search (open tenders only) that were
+  published, updated on the PNCP or first synced since `last_notified_at` (no limit when
+  nil) and have no `Notification` row for that search yet. `Notification.record!` writes
+  those rows in bulk; the unique index guarantees a tender is never alerted twice per search.

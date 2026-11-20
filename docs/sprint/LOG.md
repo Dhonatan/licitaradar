@@ -180,3 +180,100 @@ One entry per working session, newest at the bottom.
 - The states filter is a native multi-select; a nicer chip selector can come with the
   React portal (Phase 2).
 - Nothing moved to the next day.
+
+## Day 3 — Fri, Nov 20, 2026
+
+**Starting point**
+- CI on `main` was green (run for `fe2db8a`); no unchecked tasks from earlier days.
+
+**Done**
+- CI: every job now runs `bundle lock` before the cached `bundle install`. setup-ruby
+  installs in deployment mode when `Gemfile.lock` exists, so adding a gem (bcrypt, today)
+  would have failed every job before the bot could regenerate the lock. The bot committed
+  the new lock (`69389e7`).
+- Portuguese messages: `pt-BR` is the default locale (`config/locales/pt-BR.yml` with
+  validation messages and attribute names), falling back to Rails' English for anything
+  else, so the Day 2 helpers behave exactly as before.
+- Authentication (hand-written equivalent of `bin/rails generate authentication`): `User`
+  (bcrypt, e-mail normalized, format/uniqueness, password ≥ 8 chars), `Session` (signed
+  http-only cookie, IP and user agent), `Current`, `Authentication` concern (login required
+  by default; tenders and home pages opt out), login/logout, password reset by e-mail
+  (`PasswordsMailer`, HTML + text, 15-minute token that dies once the password changes,
+  all sessions signed out after a reset), same answer for unknown e-mails, rate limit of
+  10 requests per 3 minutes per IP on login, reset and sign-up. Flash messages and
+  account links in the header.
+- Sign-up page (`/registration/new`): creates the account, signs it in and returns to the
+  page that required login (e.g. "Salvar esta busca").
+- `SavedSearch` (user, name, query, niche slug, filters jsonb, active, notify_daily,
+  last_notified_at): criteria normalized through `Tenders::Search`, at least one criterion
+  required, unknown niches rejected, default name from the criteria ("“buffet” · Eventos ·
+  PE"), max 20 per account, `notifiable` scope.
+- Saved searches UI at `/saved_searches`: list (criteria, alert status, link with the
+  current number of open matches), new (pre-filled from the results page), edit (criteria,
+  name, daily alert on/off, pause), delete with confirmation; other users' searches are 404.
+  "Salvar esta busca" button on the results page whenever the search has criteria.
+- `Notification` (saved_search, tender, sent_at) with a unique index on
+  (saved_search_id, tender_id) and `Notification.record!` (bulk insert, skips duplicates).
+- `SavedSearches::Matcher`: open tenders matching the saved search, published / updated on
+  the PNCP / first synced since `last_notified_at`, never notified for that search; ordered
+  by closest deadline, optional limit.
+- Tests: i18n, User, auth flows (login, logout, wrong password, unknown e-mail, rate limit,
+  return-to after login, reset request/edit/update, expired/used/invalid tokens), mailer,
+  sign-up, SavedSearch model and CRUD (incl. ownership), Notification, Matcher (new vs
+  already notified, published/updated/synced since, criteria, ordering). Rails suite:
+  197 runs, 0 failures.
+
+**Commits**
+- `cf0717a` ci: resolve Gemfile.lock before installing gems
+- `c5a52f6` feat: show validation messages in Portuguese
+- `2e1676e` feat: add e-mail and password authentication
+- `60a5730` fix: remember the return URL for HEAD requests too
+- `c206cfb` feat: add sign-up page
+- `7829ebb` feat: add SavedSearch model
+- `38218f3` feat: add saved searches UI and the "Salvar esta busca" button
+- `2b92d6e` fix: pass saved search criteria to Tenders::Search as a hash
+- `5ee276c` feat: add Notification to record alerts already sent
+- `1efd70f` feat: add SavedSearches::Matcher
+- plus this docs commit (plan, log, README, ROADMAP, DEVELOPMENT)
+
+**CI**
+- Green at the end of the day (run for `1efd70f`: lib tests, Rails tests, RuboCop,
+  Brakeman). The bot regenerated `Gemfile.lock`/`db/schema.rb` twice (`69389e7`, `031fb03`).
+- Three red runs during the day, each fixed by the next push:
+  - `2e1676e`: Brakeman "HTTP verb confusion" on `request.get?` in the concern → `60a5730`
+    (checks GET and HEAD).
+  - `38218f3`: `Tenders::Search.new(q: …)` was called with keywords, which collide with its
+    `per_page:` keyword (ArgumentError in every saved-search test) → `2b92d6e`.
+  - `2b92d6e`: that commit accidentally included `has_many :notifications` before the
+    `Notification` model existed → `5ee276c` added the model (≈1 minute of red `main`).
+
+**Decisions**
+- Kept the generator's English route names (`/session/new`, `/registration/new`,
+  `/passwords`) to match Rails conventions; all visible text is Portuguese.
+- The return URL after login is only stored for GET/HEAD requests (a POST/DELETE URL can't
+  be reopened).
+- A blank new password on reset is rejected explicitly (`has_secure_password` silently
+  ignores blank passwords on update).
+- The test environment now uses `:memory_store` so the rate limits are really exercised;
+  integration tests clear it in `setup`.
+- Saved-search criteria are stored already normalized (the same params `Tenders::Search`
+  accepts) instead of raw form input, so the UI, the matcher and the future API all read
+  the same thing. `sort` is not stored (the digest has its own order).
+- "Since the last notification" uses PNCP `published_at`, PNCP `source_updated_at` and our
+  `created_at` (first time we synced it), so a tender published days ago but only synced
+  now still alerts. `updated_at` is useless here: every sync touches `last_seen_at`.
+- A saved search that was never notified (`last_notified_at` nil) matches every open
+  tender (deduplicated by `Notification`), so the first digest shows current opportunities.
+- Alert order is the closest deadline first (urgency matters more than rank in an alert).
+
+**Open problems / notes for next days**
+- E-mail addresses are not confirmed. Before Day 4 sends digests, consider a confirmation
+  step (or at least only sending to addresses that clicked a link) to avoid mailing people
+  who never signed up. Not done today to stay within the plan.
+- No terms of use / privacy consent on sign-up yet (LGPD): add before a public launch.
+- `rate_limit` keeps its counters in `Rails.cache`; production has no cache store
+  configured (file store per host). With several hosts, configure a shared store
+  (Solid Cache or Redis) — to note in the Day 5 deploy guide.
+- No "change password / delete account" page for signed-in users yet (reset by e-mail works).
+- The new screens were verified only by controller tests (no browser in the sandbox).
+- Nothing moved to the next day.
