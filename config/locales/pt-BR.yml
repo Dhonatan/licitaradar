@@ -1,0 +1,73 @@
+# Portuguese messages for the parts of Rails the UI shows (validation errors, model and
+# attribute names). Anything missing here falls back to Rails' built-in English (see
+# config/application.rb), so number and date helpers keep their explicit formats.
+pt-BR:
+  activerecord:
+    models:
+      user:
+        one: Usuário
+        other: Usuários
+      saved_search:
+        one: Busca salva
+        other: Buscas salvas
+    attributes:
+      user:
+        email_address: E-mail
+        password: Senha
+        password_confirmation: Confirmação da senha
+      saved_search:
+        name: Nome
+        query: Palavras-chave
+        niche_slug: Nicho
+        filters: Filtros
+        active: Ativa
+        notify_daily: Receber alertas diários
+    errors:
+      models:
+        user:
+          attributes:
+            password:
+              too_short:
+                one: "é muito curta (mínimo: 1 caractere)"
+                other: "é muito curta (mínimo: %{count} caracteres)"
+      messages:
+        record_invalid: "A validação falhou: %{errors}"
+        restrict_dependent_destroy:
+          has_one: Não é possível excluir o registro pois existe um %{record} dependente
+          has_many: Não é possível excluir o registro pois existem %{record} dependentes
+
+  errors:
+    format: "%{attribute} %{message}"
+    messages:
+      accepted: deve ser aceito
+      blank: não pode ficar em branco
+      confirmation: não é igual a %{attribute}
+      empty: não pode ficar vazio
+      equal_to: deve ser igual a %{count}
+      even: deve ser par
+      exclusion: não está disponível
+      greater_than: deve ser maior que %{count}
+      greater_than_or_equal_to: deve ser maior ou igual a %{count}
+      in: deve estar em %{count}
+      inclusion: não está incluído na lista
+      invalid: não é válido
+      less_than: deve ser menor que %{count}
+      less_than_or_equal_to: deve ser menor ou igual a %{count}
+      model_invalid: "A validação falhou: %{errors}"
+      not_a_number: não é um número
+      not_an_integer: não é um número inteiro
+      odd: deve ser ímpar
+      other_than: deve ser diferente de %{count}
+      password_too_long: é muito longa
+      present: deve ficar em branco
+      required: é obrigatório(a)
+      taken: já está em uso
+      too_long:
+        one: "é muito longo (máximo: 1 caractere)"
+        other: "é muito longo (máximo: %{count} caracteres)"
+      too_short:
+        one: "é muito curto (mínimo: 1 caractere)"
+        other: "é muito curto (mínimo: %{count} caracteres)"
+      wrong_length:
+        one: não possui o tamanho esperado (1 caractere)
+        other: não possui o tamanho esperado (%{count} caracteres)

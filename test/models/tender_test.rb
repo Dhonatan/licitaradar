@@ -20,7 +20,7 @@ class TenderTest < ActiveSupport::TestCase
     duplicate = Tender.new(pncp_control_number: tender.pncp_control_number)
 
     assert_not duplicate.valid?
-    assert_includes duplicate.errors[:pncp_control_number], "has already been taken"
+    assert_includes duplicate.errors[:pncp_control_number], "já está em uso"
     assert_not Tender.new.valid?
   end
 

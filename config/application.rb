@@ -21,6 +21,11 @@ module Licitaradar
     # Brazilian public procurement dates are published in Brasília time.
     config.time_zone = "Brasilia"
 
+    # The UI is in Portuguese. Keys missing from config/locales/pt-BR.yml fall back to
+    # Rails' built-in English translations instead of showing "translation missing".
+    config.i18n.default_locale = :"pt-BR"
+    config.i18n.fallbacks = [ :en ]
+
     config.generators.system_tests = nil
   end
 end
