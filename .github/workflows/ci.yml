@@ -28,6 +28,13 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
+      # setup-ruby installs in deployment mode when Gemfile.lock exists, which fails after a
+      # gem is added to the Gemfile. Resolve the lockfile first (a no-op when it is current).
+      - name: Refresh Gemfile.lock
+        run: bundle lock
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
           bundler-cache: true
       - name: Lint
         run: bin/rubocop -f github
@@ -37,6 +44,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+      # setup-ruby installs in deployment mode when Gemfile.lock exists, which fails after a
+      # gem is added to the Gemfile. Resolve the lockfile first (a no-op when it is current).
+      - name: Refresh Gemfile.lock
+        run: bundle lock
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
@@ -66,6 +80,13 @@ jobs:
       DB_PASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+      # setup-ruby installs in deployment mode when Gemfile.lock exists, which fails after a
+      # gem is added to the Gemfile. Resolve the lockfile first (a no-op when it is current).
+      - name: Refresh Gemfile.lock
+        run: bundle lock
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
