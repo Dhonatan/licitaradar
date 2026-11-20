@@ -10,9 +10,33 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_130100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_20_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "saved_search_id", null: false
+    t.bigint "tender_id", null: false
+    t.datetime "sent_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["saved_search_id", "tender_id"], name: "index_notifications_on_saved_search_id_and_tender_id", unique: true
+    t.index ["tender_id"], name: "index_notifications_on_tender_id"
+  end
+
+  create_table "saved_searches", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.string "query"
+    t.jsonb "filters", default: {}, null: false
+    t.string "niche_slug"
+    t.boolean "active", default: true, null: false
+    t.boolean "notify_daily", default: true, null: false
+    t.datetime "last_notified_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_saved_searches_on_user_id"
+  end
 
   create_table "sessions", force: :cascade do |t|
     t.bigint "user_id", null: false
@@ -91,5 +115,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_130100) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "notifications", "saved_searches", on_delete: :cascade
+  add_foreign_key "notifications", "tenders", on_delete: :cascade
+  add_foreign_key "saved_searches", "users", on_delete: :cascade
   add_foreign_key "sessions", "users", on_delete: :cascade
 end
