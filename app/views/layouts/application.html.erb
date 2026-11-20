@@ -19,6 +19,7 @@
           <%= button_to "Sair", session_path, method: :delete, class: "link-button", form_class: "inline-form" %>
         <% else %>
           <%= link_to "Entrar", new_session_path %>
+          <%= link_to "Criar conta", new_registration_path, class: "button button--small" %>
         <% end %>
       </nav>
     </header>
