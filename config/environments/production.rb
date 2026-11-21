@@ -17,6 +17,10 @@ Rails.application.configure do
   config.silence_healthcheck_path = "/up"
   config.active_support.report_deprecations = false
 
+  # Background and recurring jobs (config/queue.yml, config/recurring.yml). The tables
+  # live in the primary database, so no `connects_to` is needed.
+  config.active_job.queue_adapter = :solid_queue
+
   config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "example.com") }
 
   config.active_record.dump_schema_after_migration = false

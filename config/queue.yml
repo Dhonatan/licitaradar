@@ -1,0 +1,20 @@
+# Solid Queue processes (bin/jobs, or inside Puma with SOLID_QUEUE_IN_PUMA=1).
+# The tables live in the app's database (see the CreateSolidQueueTables migration).
+default: &default
+  dispatchers:
+    - polling_interval: 1
+      batch_size: 500
+  workers:
+    - queues: "*"
+      threads: 3
+      processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
+      polling_interval: 0.1
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default

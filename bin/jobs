@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+# Starts Solid Queue (workers, dispatcher and the recurring jobs of config/recurring.yml).
+require_relative "../config/environment"
+require "solid_queue/cli"
+
+SolidQueue::Cli.start(ARGV)

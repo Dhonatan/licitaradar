@@ -11,6 +11,7 @@ gem "turbo-rails"
 gem "stimulus-rails"
 gem "bootsnap", require: false
 gem "bcrypt", "~> 3.1.7" # has_secure_password
+gem "solid_queue" # background and recurring jobs, tables in the app's database
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
 group :development, :test do

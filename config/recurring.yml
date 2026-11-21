@@ -1,0 +1,22 @@
+# Recurring jobs, run by Solid Queue's scheduler (bin/jobs, or Puma with
+# SOLID_QUEUE_IN_PUMA=1). Schedules are cron lines in Brasília time.
+#
+# The sync runs every 6 hours, 30 minutes before the 07:00 digest's slot (00:30, 06:30,
+# 12:30, 18:30), so the morning e-mail is built from fresh data.
+default: &default
+  sync_open_tenders:
+    class: SyncOpenTendersJob
+    queue: default
+    schedule: "30 0,6,12,18 * * * America/Sao_Paulo"
+    description: "Refresh the tenders open for proposals from the PNCP"
+  send_daily_digests:
+    class: SendDailyDigestsJob
+    queue: default
+    schedule: "0 7 * * * America/Sao_Paulo"
+    description: "E-mail every user the new matches of their saved searches"
+
+development:
+  <<: *default
+
+production:
+  <<: *default
