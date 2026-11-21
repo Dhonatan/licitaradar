@@ -277,3 +277,116 @@ One entry per working session, newest at the bottom.
 - No "change password / delete account" page for signed-in users yet (reset by e-mail works).
 - The new screens were verified only by controller tests (no browser in the sandbox).
 - Nothing moved to the next day.
+
+## Day 4 — Sat, Nov 21, 2026
+
+**Starting point**
+- CI on `main` was green (run for `fc15524`); no unchecked tasks from earlier days.
+
+**Done**
+- `SavedSearches::Digest`: one user's daily e-mail. One section per active saved search
+  with `notify_daily` and something new (`SavedSearches::Matcher`), the 20 most urgent
+  tenders plus the total count. `#deliver` sends the e-mail, records the tenders shown as
+  `Notification`s and sets `last_notified_at` of every checked search to the moment the
+  matches were looked up.
+- `DigestMailer#daily` (HTML + text): grouped by saved search with its criteria, each
+  tender with agency, place, modality, deadline ("Encerra em 3 dias (24/11/2026 às
+  14:00)"), value ("Valor sigiloso" when 0), link to the tender page; "E mais N
+  licitações" plus a link to the search's full results; subject with the count and, for a
+  single search, its name. Preview at `/rails/mailers/digest_mailer/daily` (works with an
+  empty database too).
+- Unsubscribe: a "stop this alert" link per search and a "stop every alert" link in the
+  footer, signed with `generates_token_for` (no login needed). `/unsubscribe/:token` shows
+  a confirmation on GET (mail scanners open links) and turns `notify_daily` off on POST.
+  `List-Unsubscribe` + `List-Unsubscribe-Post` headers for one-click unsubscribes (RFC
+  8058); that POST skips CSRF because mail providers can't send a token.
+- `SendDailyDigestsJob`: delivers the digest to every user with a notifiable search; one
+  failing user is reported to `Rails.error` and doesn't stop the others; returns
+  `{ users:, sent:, failed: }` and logs it. Re-running it the same day sends only news.
+- Solid Queue (1.7.2) in production, tables in the app's database (migration mirroring the
+  gem's schema), `config/queue.yml`, `bin/jobs`, Puma plugin behind
+  `SOLID_QUEUE_IN_PUMA`. `config/recurring.yml`: sync at 00:30/06:30/12:30/18:30 and digest
+  at 07:00, `America/Sao_Paulo`. A test validates the file with
+  `SolidQueue::RecurringTask` and checks the next run times; another enqueues a real
+  Solid Queue job to prove the tables match what the gem expects.
+- Production e-mail: SMTP settings from `SMTP_*`, sender from `MAIL_FROM`, https links;
+  `.env.example` updated.
+- `ApiToken`: random `lr_` + 40 base58 chars, only the SHA-256 digest and the first
+  characters stored, shown once; `last_used_at` written at most once a minute; 10 per
+  account. Page `/api_tokens` (menu "API") to create and revoke them; the page with a new
+  token is rendered (not a redirect + flash) with `Cache-Control: no-store`.
+- JSON API v1 (`ActionController::API`, bearer token, JSON errors
+  `{ error: { code, message, details } }`, rate limit 300 requests / 5 min per token):
+  - `GET /api/v1/tenders`: `Tenders::Search` with the website's filters, `per_page` up to
+    100, `meta` with pagination, sort and the filters actually applied;
+    `GET /api/v1/tenders/:id` (any tender). Values as decimal strings, times ISO 8601.
+  - `GET/POST/DELETE /api/v1/saved_searches` and `GET /:id`: the token owner's searches,
+    criteria with the tenders filter names (`q`, `niche`, ...), 422 with per-field
+    messages, `links.tenders` to the search's open tenders.
+- `docs/API.md` (auth, rate limit, errors, every endpoint with curl and JSON examples);
+  README, ROADMAP and DEVELOPMENT updated.
+- Tests: digest (sections, limit, deliver, second run, no news), mailer (content, links,
+  subject, "e mais", unsubscribe links and headers, preview), unsubscribes (confirm,
+  per search, per account, one-click with CSRF on, invalid tokens), job (who gets
+  e-mails, re-run, failure isolation), recurring schedule + Solid Queue tables, ApiToken
+  model and page, API request tests (auth, revoked token, every field, filters, invalid
+  filters, pagination, sort, 404, rate limit, saved search CRUD, validation errors,
+  mass assignment, bad JSON). Rails suite: 252 runs, 0 failures (197 yesterday).
+
+**Commits**
+- `50506d2` feat: add the daily digest e-mail
+- `f617abf` feat: add unsubscribe links to the daily digest
+- `ff620b6` feat: add SendDailyDigestsJob
+- `b98b7cc` feat: schedule the sync and the daily digest with Solid Queue
+- `5a36717` feat: add API tokens
+- `687bae5` feat: add the JSON API v1 for tenders
+- `47fde9a` feat: add saved searches to the JSON API v1
+- `07b66ea` chore: configure SMTP delivery and the sender address for production
+- `331c13e` docs: document the JSON API v1 with curl examples
+- plus this docs commit (plan, log, README, ROADMAP, DEVELOPMENT)
+
+**CI**
+- Green on every push today (lib tests, Rails tests, RuboCop, Brakeman); no red run.
+  The bot regenerated `Gemfile.lock`/`db/schema.rb` twice (`d9e0b3c` with solid_queue
+  1.7.2 and its tables, `4dcea5b` with `api_tokens`).
+
+**Decisions**
+- The mailer takes prebuilt sections and is sent with `deliver_now` inside the job, so the
+  tenders recorded as notified are exactly the ones in the e-mail (the sections are not
+  serializable for `deliver_later`, and the job already runs in the background).
+- Only the 20 tenders shown are recorded; the rest are counted in the e-mail ("E mais N")
+  with a link to the full results, but they will not be e-mailed later unless the PNCP
+  updates them (they fall out of the "since last notification" window).
+- `last_notified_at` moves forward for every checked search, even without news, and is
+  the time the matches were looked up (not the time the e-mail left), so tenders synced
+  meanwhile are caught by the next digest.
+- Unsubscribe tokens never expire (they can only stop e-mails); separate purposes for
+  the per-search and per-account tokens so one can't be used as the other.
+- The sync runs at :30 of 0/6/12/18 h so the 07:00 digest uses data from ≈30 minutes
+  before. Development keeps the async adapter; Solid Queue is only the production adapter.
+- The whole API requires a token, including the (public on the website) tenders
+  endpoints: it identifies clients and lets us rate-limit them. Tokens are managed on the
+  website, not through the API.
+- API money values are decimal strings (Rails' default for BigDecimal, no precision loss);
+  `estimated_value` is `null` with `confidential_value: true` when the PNCP sends 0.
+- API bodies must use the `saved_search` root key (`wrap_parameters false`): Rails'
+  automatic wrapping would only wrap model attribute names and silently drop `q`/`niche`.
+- SMTP configuration was added (not in the plan) because the digest is useless in
+  production without it.
+
+**Open problems / notes for next days**
+- **E-mail addresses are still not confirmed** and digests now go out daily: anyone can
+  sign up with someone else's address and that person will get alerts (with working
+  unsubscribe links). Recommended before a public launch: confirmation e-mail, and only
+  send digests to confirmed addresses.
+- Solid Queue's tables come from a hand-written migration: when upgrading the gem, check
+  its release notes for schema changes (the "tables accept jobs" test catches missing
+  columns only for the code paths it exercises).
+- Production still needs real values for `APP_HOST`, `MAIL_FROM` and `SMTP_*`, and the
+  deploy guide (Day 5) must say how jobs run (`bin/jobs` or `SOLID_QUEUE_IN_PUMA=1`).
+- The API rate limit counts in `Rails.cache` like the login limits: needs a shared cache
+  store with more than one app host (Day 5 deploy notes).
+- The digest's look was checked only through tests and the preview code, not in real mail
+  clients (no browser/SMTP in the sandbox); the HTML uses simple inline styles.
+- No `PATCH /api/v1/saved_searches/:id` yet (not in the plan); added to the ROADMAP backlog.
+- Nothing moved to the next day.

@@ -78,3 +78,39 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
   published, updated on the PNCP or first synced since `last_notified_at` (no limit when
   nil) and have no `Notification` row for that search yet. `Notification.record!` writes
   those rows in bulk; the unique index guarantees a tender is never alerted twice per search.
+
+## Daily digest and background jobs
+
+- `SavedSearches::Digest.new(user)` builds one e-mail per user: a section per active
+  saved search with `notify_daily`, the 20 most urgent new matches plus a count of the
+  rest. `#deliver` sends `DigestMailer#daily` (with `deliver_now`: the sections are not
+  serializable and the job already runs in the background), records the tenders shown
+  as `Notification`s and sets `last_notified_at` = the moment the matches were looked up,
+  for every checked search (even without news). Matches beyond the 20 are **not** recorded
+  and fall out of the "since" window: the e-mail says how many there were and links to the
+  full results.
+- `SendDailyDigestsJob` loops over the users with notifiable searches; one failing user is
+  reported to `Rails.error` and does not stop the others. Re-running it only sends news.
+- Unsubscribe: `generates_token_for :digest_unsubscribe` (saved search) and
+  `:digest_unsubscribe_all` (user); `/unsubscribe/:token` shows a confirmation on GET and
+  unsubscribes on POST (also the RFC 8058 one-click POST, so that action skips CSRF).
+- Solid Queue runs jobs in production with its tables **in the primary database** (the
+  `CreateSolidQueueTables` migration mirrors the gem's `queue_schema.rb`; no
+  `connects_to`). When upgrading `solid_queue`, check its release notes for schema changes
+  and add a migration. Development keeps the default async adapter; run `bin/jobs` to try
+  the recurring schedule. `test/config/recurring_schedule_test.rb` validates
+  `config/recurring.yml` with Solid Queue itself and checks the run times.
+
+## JSON API
+
+- `Api::V1::BaseController < ActionController::API`: no cookies/CSRF; `Authorization:
+  Bearer <token>` resolved by `ApiToken.authenticate` (SHA-256 digest lookup, `last_used_at`
+  written at most once a minute); `rate_limit` 300 / 5 min per token; JSON errors
+  `{ error: { code, message, details } }`; `wrap_parameters false` (bodies must use the
+  `saved_search` root key).
+- Serializers are plain Ruby classes in `app/serializers/api/v1/` taking the record and
+  the controller (for URL helpers). Decimal values are strings; times ISO 8601.
+- Tender filters are exactly `Tenders::Search`'s; invalid values are ignored and
+  `meta.filters` echoes what was applied. Saved search criteria use the same names
+  (`q` ↔ `query`, `niche` ↔ `niche_slug`).
+- Update `docs/API.md` with every API change.

@@ -82,19 +82,19 @@ Default niche presets (configurable later): **Marketing & comunicação**, **Eve
 - [x] `Notification` (saved_search, tender, sent_at) with unique index to avoid duplicate alerts.
 - [x] Tests: auth flows, saved search CRUD, matcher (new vs already notified).
 
-## Day 4 — Sat, Nov 21 · Alerts + API
+## Day 4 — Sat, Nov 21 · Alerts + API ✅
 
-- [ ] `DigestMailer#daily` (HTML + text): grouped by saved search, top 20 per search,
+- [x] `DigestMailer#daily` (HTML + text): grouped by saved search, top 20 per search,
       deadline and value, links to the tender page; unsubscribe link (signed token).
-- [ ] `SendDailyDigestsJob`: for every user with active searches, build matches, send one
+- [x] `SendDailyDigestsJob`: for every user with active searches, build matches, send one
       e-mail, create `Notification` rows, update `last_notified_at`.
-- [ ] Solid Queue (single database setup via migration) and `config/recurring.yml`:
+- [x] Solid Queue (single database setup via migration) and `config/recurring.yml`:
       sync every 6 hours, digest daily at 07:00 (Brasília).
-- [ ] JSON API v1: `GET /api/v1/tenders` (same filters as the UI, paginated, JSON with
+- [x] JSON API v1: `GET /api/v1/tenders` (same filters as the UI, paginated, JSON with
       metadata), `GET /api/v1/tenders/:id`, `GET/POST/DELETE /api/v1/saved_searches`;
       bearer-token auth via `ApiToken` model (hashed token, last_used_at).
-- [ ] `docs/API.md` with examples (curl).
-- [ ] Tests: mailer previews + tests, digest job, API request tests (auth, filters, errors).
+- [x] `docs/API.md` with examples (curl).
+- [x] Tests: mailer previews + tests, digest job, API request tests (auth, filters, errors).
 
 ## Day 5 — Sun, Nov 22 · Hardening + release
 

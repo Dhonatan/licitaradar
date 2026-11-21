@@ -14,8 +14,8 @@ Work is organized in phases. Phase 1 is a one-week bootstrap sprint (day-by-day 
 - [x] Public search page: keywords, state, modality, value range, "closing soon"
 - [x] Niche presets (marketing & communication, events, IT services)
 - [x] Accounts, saved searches and match engine
-- [ ] Daily digest e-mail + recurring jobs (Solid Queue)
-- [ ] JSON API v1 (token auth) for the future portal
+- [x] Daily digest e-mail + recurring jobs (Solid Queue)
+- [x] JSON API v1 (token auth) for the future portal ([`docs/API.md`](docs/API.md))
 - [x] Seeds with fictional data
 - [ ] Docker image, deploy guide
 
@@ -43,6 +43,8 @@ Work is organized in phases. Phase 1 is a one-week bootstrap sprint (day-by-day 
 ## Ideas / backlog
 
 - Webhooks for alerts
+- E-mail address confirmation before the first digest
+- API v1: update a saved search (`PATCH`), list the tenders already e-mailed for a search
 - CSV/Excel export
 - Public stats page (open tenders per state, per niche)
 - i18n of the UI (pt-BR first, English and Spanish later)

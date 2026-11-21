@@ -43,10 +43,11 @@ day-by-day log in [`docs/sprint/`](docs/sprint).
 | LGPD: CPF masking in free-text fields | ✅ done, tested |
 | Persistence (`tenders` with Portuguese full-text column) + idempotent sync | ✅ done, tested |
 | Search (accent-insensitive, ranked) + niche presets + public UI | ✅ done, tested |
-| Recurring schedule for the sync (Solid Queue) | 🗓️ planned |
+| Recurring schedule: sync every 6 h, digest at 07:00 (Solid Queue) | ✅ done, tested |
 | Accounts (sign-up, login, password reset) + saved searches + match engine | ✅ done, tested |
-| Daily e-mail alerts | 🗓️ planned |
-| JSON API + React portal | 🗓️ planned |
+| Daily e-mail alerts (one digest per user, unsubscribe links) | ✅ done, tested |
+| JSON API v1 with bearer tokens ([`docs/API.md`](docs/API.md)) | ✅ done, tested |
+| React portal | 🗓️ planned |
 
 ## Built with
 
@@ -90,6 +91,18 @@ bin/rails pncp:sync                  # every competitive modality
 MODALITIES=6,8 bin/rails pncp:sync   # only Pregão Eletrônico and Dispensa
 ```
 
+Run the background jobs and the recurring schedule (`config/recurring.yml`: sync every
+6 hours, daily digest at 07:00 Brasília time):
+
+```bash
+bin/jobs
+```
+
+Preview the daily digest e-mail at http://localhost:3000/rails/mailers/digest_mailer/daily.
+
+The JSON API (`/api/v1`) is documented in [`docs/API.md`](docs/API.md); create a token
+while signed in at http://localhost:3000/api_tokens.
+
 ## Running tests
 
 ```bash
@@ -106,6 +119,9 @@ lib/pncp/            PNCP API client, normalizer, PII scrubber (no Rails)
 app/                 Rails app (models, jobs, controllers, views)
 app/services/        Tenders::Sync (PNCP → database) and Tenders::Search (query object)
 app/services/saved_searches/  SavedSearches::Matcher (what a saved search should alert about)
+                     and SavedSearches::Digest (one user's daily e-mail)
+app/controllers/api/ JSON API v1 (serializers in app/serializers/api/)
+config/recurring.yml recurring jobs (Solid Queue)
 config/locales/      Portuguese UI messages (English fallback)
 config/niches.yml    niche presets (keywords per line of business)
 test/lib/            tests for lib/ — run with bin/test-lib
@@ -120,6 +136,8 @@ docs/sprint/         day-by-day plan and log of the bootstrap sprint
 - CPF numbers found in free-text fields are masked before storage.
 - Account passwords are stored only as bcrypt hashes; login, sign-up and password reset
   requests are rate limited.
+- API tokens are stored only as SHA-256 hashes and shown once; every digest e-mail has
+  unsubscribe links (and one-click `List-Unsubscribe` headers) that work without a login.
 - The repository contains **only fictional sample data** (see `test/fixtures`).
 
 ## Contributing
