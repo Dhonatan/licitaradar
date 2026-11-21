@@ -1,0 +1,28 @@
+<% content_for :title, "Alertas por e-mail — LicitaRadar" %>
+
+<section class="card unsubscribe">
+  <% subscribed = @saved_searches.where(notify_daily: true).exists? %>
+
+  <% if @saved_search %>
+    <h1 class="page-title">Alerta da busca “<%= @saved_search.name %>”</h1>
+    <% if subscribed %>
+      <p>Quer parar de receber o alerta diário desta busca? Ela continua salva e você pode reativar o alerta quando quiser.</p>
+    <% else %>
+      <p>O alerta diário desta busca está desativado.</p>
+    <% end %>
+  <% else %>
+    <h1 class="page-title">Alertas diários de <%= @user.email_address %></h1>
+    <% if subscribed %>
+      <p>Quer parar de receber o e-mail diário de todas as suas buscas salvas? Elas continuam salvas e você pode reativar os alertas quando quiser.</p>
+    <% else %>
+      <p>Os alertas diários de todas as suas buscas salvas estão desativados.</p>
+    <% end %>
+  <% end %>
+
+  <div class="actions">
+    <% if subscribed %>
+      <%= button_to "Parar os alertas", unsubscribe_path(params[:token]), class: "button" %>
+    <% end %>
+    <%= link_to "Gerenciar minhas buscas", saved_searches_path, class: "button button--secondary" %>
+  </div>
+</section>

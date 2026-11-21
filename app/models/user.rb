@@ -7,6 +7,9 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :saved_searches, dependent: :destroy
 
+  # Signed token for the "stop every alert" link of the daily digest (see UnsubscribesController).
+  generates_token_for :digest_unsubscribe_all
+
   normalizes :email_address, with: ->(email) { email.strip.downcase }
 
   validates :email_address, presence: true, uniqueness: true, length: { maximum: 254 },

@@ -32,11 +32,15 @@
     <% end %>
     <%= link_to "Ver todas as licitações abertas desta busca", tenders_url(saved_search.search_params) %>
   </p>
+  <p style="margin: 4px 0 0; font-size: 13px;">
+    <%= link_to "Parar o alerta desta busca", unsubscribe_url(saved_search.generate_token_for(:digest_unsubscribe)), style: "color: #5b6475;" %>
+  </p>
 <% end %>
 
 <hr style="border: 0; border-top: 1px solid #dfe3ea; margin: 28px 0 12px;">
 
 <p style="color: #5b6475; font-size: 13px;">
   Você recebe este e-mail porque ativou o alerta diário em buscas salvas no LicitaRadar.
-  <%= link_to "Gerenciar minhas buscas", saved_searches_url %>.
+  <%= link_to "Gerenciar minhas buscas", saved_searches_url %> ·
+  <%= link_to "Parar todos os alertas", @unsubscribe_all_url %>
 </p>

@@ -40,6 +40,21 @@ class DigestMailerTest < ActionMailer::TestCase
     assert_includes mail.text_part.body.to_s, "http://example.com/tenders?q=buffet&states%5B%5D=PE"
   end
 
+  test "daily has unsubscribe links for each search and for every alert" do
+    mail = DigestMailer.daily(@user, [ section([ create_open_tender(object_description: "Serviço de buffet") ]) ])
+
+    all_url = mail["List-Unsubscribe"].to_s.delete_prefix("<").delete_suffix(">")
+    assert_match %r{\Ahttp://example\.com/unsubscribe/[^/]+\z}, all_url
+    assert_equal "List-Unsubscribe=One-Click", mail["List-Unsubscribe-Post"].to_s
+    assert_equal @user, User.find_by_token_for(:digest_unsubscribe_all, all_url.split("/").last)
+
+    search_token = mail.text_part.body.to_s[%r{Parar o alerta desta busca: http://example\.com/unsubscribe/(\S+)}, 1]
+    assert_equal @saved_search, SavedSearch.find_by_token_for(:digest_unsubscribe, search_token)
+    assert_includes mail.text_part.body.to_s, "Parar todos os alertas: #{all_url}"
+    assert_includes mail.html_part.body.to_s, all_url
+    assert_includes mail.html_part.body.to_s, "Parar o alerta desta busca"
+  end
+
   test "daily with a single search names it in the subject" do
     mail = DigestMailer.daily(@user, [ section([ create_open_tender(object_description: "Serviço de buffet") ]) ])
 

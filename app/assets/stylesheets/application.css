@@ -169,3 +169,4 @@ input[type="email"], input[type="password"], input[type="number"] {
 .saved-search-form .filters { margin-bottom: 1rem; }
 .field--options label { font-weight: 400; display: flex; gap: 0.4rem; align-items: center; }
 .field_with_errors { display: contents; }
+.unsubscribe { max-width: 640px; margin: 0 auto; }

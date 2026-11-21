@@ -13,6 +13,9 @@ class SavedSearch < ApplicationRecord
   belongs_to :user
   has_many :notifications, dependent: :delete_all
 
+  # Signed token for the "stop this alert" link of the daily digest (see UnsubscribesController).
+  generates_token_for :digest_unsubscribe
+
   FILTER_KEYS.each do |key|
     define_method(key) { filter_values[key] }
     define_method(:"#{key}=") { |value| self.filters = filter_values.merge(key => value) }

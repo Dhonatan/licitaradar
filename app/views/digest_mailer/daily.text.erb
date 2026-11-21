@@ -16,8 +16,10 @@ E mais <%= section.remaining_count == 1 ? "1 licitação" : "#{section.remaining
 <% end %>
 Ver todas as licitações abertas desta busca:
 <%= tenders_url(saved_search.search_params) %>
+Parar o alerta desta busca: <%= unsubscribe_url(saved_search.generate_token_for(:digest_unsubscribe)) %>
 <% end %>
 
 --
 Você recebe este e-mail porque ativou o alerta diário em buscas salvas no LicitaRadar.
 Gerenciar minhas buscas: <%= saved_searches_url %>
+Parar todos os alertas: <%= @unsubscribe_all_url %>
