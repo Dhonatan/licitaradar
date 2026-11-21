@@ -14,5 +14,12 @@ Rails.application.routes.draw do
   get "unsubscribe/:token" => "unsubscribes#show", as: :unsubscribe
   post "unsubscribe/:token" => "unsubscribes#create"
 
+  # JSON API (docs/API.md), bearer-token authentication.
+  namespace :api, defaults: { format: :json } do
+    namespace :v1 do
+      resources :tenders, only: %i[ index show ]
+    end
+  end
+
   root "pages#home"
 end

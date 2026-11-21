@@ -19,6 +19,7 @@ end
 
 ActiveSupport.on_load(:action_dispatch_integration_test) do
   include SessionTestHelper
+  include ApiTestHelper
 
   # Rate limits count requests in Rails.cache; start every test from zero.
   setup { Rails.cache.clear }
