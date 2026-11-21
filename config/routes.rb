@@ -8,6 +8,7 @@ Rails.application.routes.draw do
 
   resources :tenders, only: %i[ index show ]
   resources :saved_searches, except: :show
+  resources :api_tokens, only: %i[ index create destroy ]
 
   # Unsubscribe links of the daily digest (signed token, no login).
   get "unsubscribe/:token" => "unsubscribes#show", as: :unsubscribe

@@ -10,6 +10,9 @@ pt-BR:
       saved_search:
         one: Busca salva
         other: Buscas salvas
+      api_token:
+        one: Token de API
+        other: Tokens de API
     attributes:
       user:
         email_address: E-mail
@@ -22,6 +25,8 @@ pt-BR:
         filters: Filtros
         active: Ativa
         notify_daily: Receber alertas diários
+      api_token:
+        name: Nome
     errors:
       models:
         user:

@@ -170,3 +170,11 @@ input[type="email"], input[type="password"], input[type="number"] {
 .field--options label { font-weight: 400; display: flex; gap: 0.4rem; align-items: center; }
 .field_with_errors { display: contents; }
 .unsubscribe { max-width: 640px; margin: 0 auto; }
+
+/* API tokens */
+.new-token { background: #e6f4f1; border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+.new-token p { margin: 0.25rem 0; }
+.new-token__value { font-size: 1rem; overflow-wrap: anywhere; user-select: all; }
+.token-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+.token-table th, .token-table td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--line); font-size: 0.9375rem; }
+.token-table th { color: var(--muted); font-size: 0.8125rem; font-weight: 600; }

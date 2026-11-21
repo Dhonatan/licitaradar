@@ -17,6 +17,7 @@
         <%= link_to "Buscar licitações", tenders_path %>
         <% if authenticated? %>
           <%= link_to "Minhas buscas", saved_searches_path %>
+          <%= link_to "API", api_tokens_path %>
           <%= button_to "Sair", session_path, method: :delete, class: "link-button", form_class: "inline-form" %>
         <% else %>
           <%= link_to "Entrar", new_session_path %>

@@ -1,0 +1,61 @@
+<% content_for :title, "Tokens de API — LicitaRadar" %>
+
+<div class="page-header">
+  <h1 class="page-title">Tokens de API</h1>
+</div>
+
+<p class="lead">
+  Use um token para consultar licitações e gerenciar suas buscas salvas pela API JSON
+  (<code>Authorization: Bearer &lt;token&gt;</code>).
+  <%= link_to "Documentação da API", "https://github.com/Dhonatan/licitaradar/blob/main/docs/API.md", rel: "noopener", target: "_blank" %>.
+</p>
+
+<% if @created_token %>
+  <div class="new-token" id="new_token">
+    <p><strong>Token “<%= @created_token.name %>” criado.</strong> Copie agora: ele não será mostrado de novo.</p>
+    <p><code class="new-token__value"><%= @created_token.token %></code></p>
+  </div>
+<% end %>
+
+<%= render "shared/form_errors", record: @api_token unless @created_token %>
+
+<%= form_with model: @api_token, class: "search-form api-token-form", data: { turbo: false } do |form| %>
+  <div class="field">
+    <%= form.label :name, "Nome do token" %>
+    <div class="search-row">
+      <%= form.text_field :name, maxlength: ApiToken::MAX_NAME_LENGTH, placeholder: "Ex.: Integração com o CRM", required: true %>
+      <%= form.submit "Criar token", class: "button" %>
+    </div>
+  </div>
+<% end %>
+
+<% if @api_tokens.any? %>
+  <table class="token-table">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Token</th>
+        <th>Criado em</th>
+        <th>Último uso</th>
+        <th><span class="visually-hidden">Ações</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @api_tokens.each do |api_token| %>
+        <tr id="<%= dom_id(api_token) %>">
+          <td><%= api_token.name %></td>
+          <td><code><%= api_token.token_hint %>…</code></td>
+          <td><%= date_br(api_token.created_at) %></td>
+          <td><%= api_token.last_used_at ? date_time_br(api_token.last_used_at) : "nunca" %></td>
+          <td>
+            <%= button_to "Revogar", api_token_path(api_token), method: :delete, class: "link-button link-button--danger",
+                          form_class: "inline-form", form: { data: { turbo_confirm: "Revogar o token “#{api_token.name}”? Integrações que o usam vão parar de funcionar." } } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p class="muted small">Você pode ter até <%= ApiToken::MAX_PER_USER %> tokens.</p>
+<% else %>
+  <p class="muted">Você ainda não criou nenhum token.</p>
+<% end %>

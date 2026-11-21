@@ -6,6 +6,7 @@ class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
   has_many :saved_searches, dependent: :destroy
+  has_many :api_tokens, dependent: :delete_all
 
   # Signed token for the "stop every alert" link of the daily digest (see UnsubscribesController).
   generates_token_for :digest_unsubscribe_all
