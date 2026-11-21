@@ -21,7 +21,21 @@ Rails.application.configure do
   # live in the primary database, so no `connects_to` is needed.
   config.active_job.queue_adapter = :solid_queue
 
-  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "example.com") }
+  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "example.com"), protocol: "https" }
+
+  # Password resets and the daily digest go out through any SMTP provider
+  # (SMTP_ADDRESS, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD; see .env.example).
+  if ENV["SMTP_ADDRESS"].present?
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address: ENV["SMTP_ADDRESS"],
+      port: ENV.fetch("SMTP_PORT", 587).to_i,
+      user_name: ENV["SMTP_USERNAME"],
+      password: ENV["SMTP_PASSWORD"],
+      authentication: ENV["SMTP_USERNAME"].present? ? :plain : nil,
+      enable_starttls_auto: true
+    }.compact
+  end
 
   config.active_record.dump_schema_after_migration = false
   config.active_record.attributes_for_inspect = [ :id ]

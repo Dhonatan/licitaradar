@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "LicitaRadar <alertas@licitaradar.example.com>"
+  default from: ENV.fetch("MAIL_FROM", "LicitaRadar <alertas@licitaradar.example.com>")
   layout "mailer"
 end
