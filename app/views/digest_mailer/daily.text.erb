@@ -1,0 +1,23 @@
+Olá,
+
+Encontramos <%= @tenders_count == 1 ? "1 nova licitação aberta" : "#{@tenders_count} novas licitações abertas" %> para <%= @sections.one? ? "a sua busca salva" : "as suas buscas salvas" %>. As que encerram antes aparecem primeiro.
+<% @sections.each do |section| %>
+<% saved_search = section.saved_search %>
+== <%= saved_search.name %> ==
+<%= saved_search_criteria(saved_search).join(" · ") %>
+<% section.tenders.each do |tender| %>
+* <%= tender.object_description.to_s.truncate(220) %>
+  <%= [ tender.agency_name, tender_location(tender), tender_modality(tender) ].compact_blank.join(" · ") %>
+  <%= deadline_text(tender.proposals_close_at).upcase_first %><%= " (#{date_time_br(tender.proposals_close_at)})" if tender.proposals_close_at %> · <%= tender.confidential_value? ? "Valor sigiloso" : brl(tender.estimated_value) %>
+  <%= tender_url(tender) %>
+<% end %>
+<% if section.remaining_count > 0 %>
+E mais <%= section.remaining_count == 1 ? "1 licitação" : "#{section.remaining_count} licitações" %>.
+<% end %>
+Ver todas as licitações abertas desta busca:
+<%= tenders_url(saved_search.search_params) %>
+<% end %>
+
+--
+Você recebe este e-mail porque ativou o alerta diário em buscas salvas no LicitaRadar.
+Gerenciar minhas buscas: <%= saved_searches_url %>

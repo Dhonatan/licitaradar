@@ -1,0 +1,42 @@
+<p>Olá,</p>
+
+<p>
+  Encontramos <strong><%= @tenders_count == 1 ? "1 nova licitação aberta" : "#{@tenders_count} novas licitações abertas" %></strong>
+  para <%= @sections.one? ? "a sua busca salva" : "as suas buscas salvas" %>. As que encerram antes aparecem primeiro.
+</p>
+
+<% @sections.each do |section| %>
+  <% saved_search = section.saved_search %>
+  <h2 style="font-size: 18px; margin: 28px 0 4px;"><%= saved_search.name %></h2>
+  <p style="color: #5b6475; font-size: 13px; margin: 0 0 12px;"><%= saved_search_criteria(saved_search).join(" · ") %></p>
+
+  <% section.tenders.each do |tender| %>
+    <div style="border: 1px solid #dfe3ea; border-radius: 8px; padding: 12px 14px; margin: 0 0 10px;">
+      <p style="margin: 0 0 4px; font-weight: bold;">
+        <%= link_to tender.object_description.to_s.truncate(220), tender_url(tender), style: "color: #1f2733;" %>
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #5b6475;">
+        <%= [ tender.agency_name, tender_location(tender), tender_modality(tender) ].compact_blank.join(" · ") %>
+      </p>
+      <p style="margin: 4px 0 0; font-size: 14px;">
+        <strong><%= deadline_text(tender.proposals_close_at).upcase_first %></strong>
+        <% if tender.proposals_close_at %>(<%= date_time_br(tender.proposals_close_at) %>)<% end %>
+        · <%= tender.confidential_value? ? "Valor sigiloso" : brl(tender.estimated_value) %>
+      </p>
+    </div>
+  <% end %>
+
+  <p style="margin: 4px 0 0; font-size: 14px;">
+    <% if section.remaining_count > 0 %>
+      E mais <%= section.remaining_count == 1 ? "1 licitação" : "#{section.remaining_count} licitações" %>.
+    <% end %>
+    <%= link_to "Ver todas as licitações abertas desta busca", tenders_url(saved_search.search_params) %>
+  </p>
+<% end %>
+
+<hr style="border: 0; border-top: 1px solid #dfe3ea; margin: 28px 0 12px;">
+
+<p style="color: #5b6475; font-size: 13px;">
+  Você recebe este e-mail porque ativou o alerta diário em buscas salvas no LicitaRadar.
+  <%= link_to "Gerenciar minhas buscas", saved_searches_url %>.
+</p>
