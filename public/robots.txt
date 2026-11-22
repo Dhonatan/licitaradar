@@ -1,0 +1,5 @@
+# See https://www.robotstxt.org/robotstxt.html
+# Search engines may index the public tender pages; account pages require login anyway.
+User-agent: *
+Disallow: /api/
+Disallow: /unsubscribe/
