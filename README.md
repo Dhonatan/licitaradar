@@ -31,10 +31,81 @@ which exposes a free, open query API. In practice the API is hard to use directl
 
 LicitaRadar handles all of that once, so users only see relevant, clean opportunities.
 
+## Features
+
+- **Open tenders only.** Every 6 hours LicitaRadar pulls the tenders still open for
+  proposals from the PNCP (competitive modalities: pregão, concorrência, dispensa, ...).
+- **Search that works in Portuguese.** Keywords with or without accents, stemming
+  ("eventos" finds "evento"), `"exact phrases"` and `-exclusions`, ranked by relevance;
+  filters by state, modality, estimated value and "closes in N days".
+- **Niche presets.** One click for marketing & communication, events or IT
+  (`config/niches.yml`).
+- **Saved searches and a daily digest.** Save any search and get one e-mail every morning
+  with what is new, most urgent deadlines first, with one-click unsubscribe.
+- **JSON API v1** with bearer tokens, for integrations and the upcoming React portal
+  ([`docs/API.md`](docs/API.md)).
+- **Built to run unattended.** Retries at three levels, an alert e-mail when the sync keeps
+  failing, an admin status page (`/status`, also as JSON for uptime monitors) and a
+  production Docker image smoke-tested in CI ([`docs/DEPLOY.md`](docs/DEPLOY.md)).
+- **Privacy by default.** CPF numbers masked before storage, hashed passwords and API
+  tokens, rate-limited login and API.
+
+## Screenshots
+
+> Screenshots will be added after the first public deploy. Until then, run the app locally
+> with the fictional seed data (`bin/rails db:seed`) to see every page.
+
+| Page | Path |
+| --- | --- |
+| Home (search box, niches, numbers) | `/` |
+| Results with filters | `/tenders?niche=eventos` |
+| Tender detail with deadline countdown | `/tenders/:id` |
+| Saved searches | `/saved_searches` |
+| Daily digest e-mail (preview) | `/rails/mailers/digest_mailer/daily` |
+| Admin status | `/status` |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  PNCP[("PNCP public API<br/>pncp.gov.br")]
+
+  subgraph app["LicitaRadar (one Rails 8.1 app, one Docker image)"]
+    direction TB
+    Client["lib/pncp<br/>client · normalizer · CPF scrubber<br/>(plain Ruby)"]
+    Sync["Tenders::Sync<br/>SyncOpenTendersJob"]
+    Search["Tenders::Search<br/>(full-text + filters)"]
+    Matcher["SavedSearches::Matcher<br/>SavedSearches::Digest"]
+    Web["Web UI<br/>(Hotwire)"]
+    API["JSON API v1<br/>(bearer tokens)"]
+    Status["/status"]
+    Queue["Solid Queue<br/>recurring: sync 6/6 h, digest 07:00"]
+  end
+
+  DB[("PostgreSQL<br/>tenders (tsvector + GIN), users,<br/>saved searches, notifications,<br/>sync runs, Solid Queue tables")]
+  SMTP["SMTP provider"]
+  Users(["Users / integrations"])
+  Portal(["React portal<br/>(Phase 2)"])
+
+  PNCP -->|"open tenders, paginated"| Client --> Sync -->|"upsert"| DB
+  Queue -->|"runs"| Sync
+  Queue -->|"runs"| Matcher
+  Search --> DB
+  Matcher --> Search
+  Matcher -->|"daily digest, admin alerts"| SMTP
+  Web --> Search
+  API --> Search
+  Status --> DB
+  Users --> Web
+  Users --> API
+  Portal -.-> API
+```
+
 ## Status
 
-🚧 **Early development (started November 2026).** See [`ROADMAP.md`](ROADMAP.md) and the
-day-by-day log in [`docs/sprint/`](docs/sprint).
+✅ **Phase 1 (core product) done — v0.1.0, Nov 22, 2026.** Next: the React portal
+(Phase 2). See [`ROADMAP.md`](ROADMAP.md), [`CHANGELOG.md`](CHANGELOG.md) and the sprint
+log and report in [`docs/sprint/`](docs/sprint).
 
 | Area | State |
 | --- | --- |
@@ -42,12 +113,14 @@ day-by-day log in [`docs/sprint/`](docs/sprint).
 | Record normalization (Brasília times, decimals, CNPJ, public URL) | ✅ done, tested |
 | LGPD: CPF masking in free-text fields | ✅ done, tested |
 | Persistence (`tenders` with Portuguese full-text column) + idempotent sync | ✅ done, tested |
+| Sync retries, admin alert e-mail, status page | ✅ done, tested |
 | Search (accent-insensitive, ranked) + niche presets + public UI | ✅ done, tested |
 | Recurring schedule: sync every 6 h, digest at 07:00 (Solid Queue) | ✅ done, tested |
 | Accounts (sign-up, login, password reset) + saved searches + match engine | ✅ done, tested |
 | Daily e-mail alerts (one digest per user, unsubscribe links) | ✅ done, tested |
 | JSON API v1 with bearer tokens ([`docs/API.md`](docs/API.md)) | ✅ done, tested |
-| React portal | 🗓️ planned |
+| Production Docker image + deploy guide ([`docs/DEPLOY.md`](docs/DEPLOY.md)) | ✅ done, smoke-tested in CI |
+| React portal | 🗓️ planned (Phase 2) |
 
 ## Built with
 
@@ -103,6 +176,18 @@ Preview the daily digest e-mail at http://localhost:3000/rails/mailers/digest_ma
 The JSON API (`/api/v1`) is documented in [`docs/API.md`](docs/API.md); create a token
 while signed in at http://localhost:3000/api_tokens.
 
+## Deploying
+
+One Docker image, one PostgreSQL database, an SMTP provider. Step-by-step for Render,
+Fly.io, Kamal or any Docker host, the environment variables and the post-deploy checklist
+are in [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+```bash
+docker build -t licitaradar .
+docker run -p 3000:3000 -e DATABASE_URL=... -e SECRET_KEY_BASE=... -e APP_HOST=... \
+  -e SOLID_QUEUE_IN_PUMA=1 licitaradar
+```
+
 ## Running tests
 
 ```bash
@@ -124,9 +209,12 @@ app/controllers/api/ JSON API v1 (serializers in app/serializers/api/)
 config/recurring.yml recurring jobs (Solid Queue)
 config/locales/      Portuguese UI messages (English fallback)
 config/niches.yml    niche presets (keywords per line of business)
+public/              static error pages (404, 422, 500, ...) in Portuguese
 test/lib/            tests for lib/ — run with bin/test-lib
 test/                Rails tests
-docs/sprint/         day-by-day plan and log of the bootstrap sprint
+docs/                API, deploy guide, development guide, performance notes
+docs/sprint/         day-by-day plan, log and final report of the bootstrap sprint
+Dockerfile           production image (bin/docker-entrypoint prepares the database)
 ```
 
 ## Data & privacy
