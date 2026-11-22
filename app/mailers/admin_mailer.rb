@@ -8,6 +8,7 @@ class AdminMailer < ApplicationMailer
   # runs: the SyncRuns that failed on the last automatic attempt.
   def sync_failed(runs)
     @runs = runs
+    @status_url = status_url
 
     mail to: self.class.recipients,
          subject: "[LicitaRadar] Falha na sincronização com o PNCP (#{runs.size} #{runs.one? ? "modalidade" : "modalidades"})"

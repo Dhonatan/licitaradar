@@ -29,5 +29,6 @@ class AdminMailerTest < ActionMailer::TestCase
     assert_match "Erro: Pncp::HttpError: PNCP answered HTTP 503", body
     assert_match "Erro: sem mensagem", body
     assert_match "Falhas seguidas: 2", body
+    assert_match "http://example.com/status", body
   end
 end

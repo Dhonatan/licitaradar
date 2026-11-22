@@ -178,3 +178,9 @@ input[type="email"], input[type="password"], input[type="number"] {
 .token-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
 .token-table th, .token-table td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--line); font-size: 0.9375rem; }
 .token-table th { color: var(--muted); font-size: 0.8125rem; font-weight: 600; }
+
+/* Status page */
+.data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); margin-bottom: 1.5rem; }
+.data-table th, .data-table td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line); font-size: 0.9375rem; vertical-align: top; }
+.data-table th { color: var(--muted); font-size: 0.8125rem; font-weight: 600; }
+@media (max-width: 720px) { .data-table { display: block; overflow-x: auto; } }

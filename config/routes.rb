@@ -2,6 +2,9 @@ Rails.application.routes.draw do
   # Load balancers and uptime monitors use this to check the app booted.
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # Admin status page (basic auth with STATUS_USERNAME / STATUS_PASSWORD).
+  get "status" => "status#show", as: :status
+
   resource :session, only: %i[ new create destroy ]
   resource :registration, only: %i[ new create ]
   resources :passwords, param: :token, only: %i[ new create edit update ]

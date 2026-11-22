@@ -129,3 +129,9 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
 - Tests that need a failing modality stub HTTP 400: the client does not retry it, so no
   backoff sleeps slow the suite down. `with_env` (test/test_helpers) sets ENV variables
   for one block.
+- `/status` (`StatusController`, `SystemStatus`) shows the latest run and last success
+  per modality, counts and the Solid Queue queue, behind HTTP basic auth with
+  `STATUS_USERNAME`/`STATUS_PASSWORD` (404 when they are unset). A modality is healthy
+  when its latest run did not fail and it succeeded in the last `SystemStatus::STALE_AFTER`
+  (12 h). `/status.json` answers 503 when any competitive modality is unhealthy, for
+  uptime monitors.

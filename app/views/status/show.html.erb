@@ -1,0 +1,129 @@
+<% content_for :title, "Status — LicitaRadar" %>
+
+<div class="page-header">
+  <h1 class="page-title">Status</h1>
+  <% if @status.healthy? %>
+    <span class="badge badge--ok" id="overall-status">tudo certo</span>
+  <% else %>
+    <span class="badge badge--urgent" id="overall-status">atenção</span>
+  <% end %>
+</div>
+<p class="muted small">
+  Verificado em <%= date_time_br(@status.checked_at) %>. Uma modalidade está “ok” quando a última sincronização
+  deu certo e houve sucesso nas últimas <%= SystemStatus::STALE_AFTER.in_hours.to_i %> horas.
+  Também em <%= link_to "JSON", status_path(format: :json) %>.
+</p>
+
+<h2>Sincronização com o PNCP</h2>
+<table class="data-table" id="modalities">
+  <thead>
+    <tr>
+      <th scope="col">Modalidade</th>
+      <th scope="col">Situação</th>
+      <th scope="col">Última execução</th>
+      <th scope="col">Último sucesso</th>
+      <th scope="col">Falhas seguidas</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @status.modalities.each do |modality| %>
+      <tr id="modality-<%= modality.modality_id %>">
+        <td><span class="muted"><%= modality.modality_id %></span> <%= modality.name %></td>
+        <td>
+          <% if modality.healthy?(@status.checked_at) %>
+            <span class="badge badge--ok">ok</span>
+          <% elsif modality.latest_run.nil? %>
+            <span class="badge badge--unknown">nunca sincronizada</span>
+          <% elsif modality.latest_run.running? %>
+            <span class="badge badge--soon">em andamento</span>
+          <% else %>
+            <span class="badge badge--urgent">atenção</span>
+          <% end %>
+        </td>
+        <td>
+          <% if (run = modality.latest_run) %>
+            <%= date_time_br(run.started_at) %> · <%= run.status %>
+            <% if run.error_message.present? %>
+              <br><span class="muted small"><%= run.error_message.truncate(160) %></span>
+            <% end %>
+          <% else %>
+            —
+          <% end %>
+        </td>
+        <td><%= modality.last_succeeded_at ? date_time_br(modality.last_succeeded_at) : "—" %></td>
+        <td><%= modality.failures_in_a_row %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<h2>Números</h2>
+<% labels = {
+     tenders: "licitações no banco",
+     open_tenders: "abertas para propostas",
+     closing_this_week: "encerram em 7 dias",
+     new_tenders_last_24h: "novas nas últimas 24 h",
+     users: "contas",
+     saved_searches: "buscas salvas",
+     notifiable_saved_searches: "buscas com alerta diário",
+     notifications_last_24h: "alertas enviados em 24 h",
+     api_tokens: "tokens de API"
+   } %>
+<section class="stats" id="counts" aria-label="Números">
+  <% labels.each do |key, label| %>
+    <div class="stat" id="count-<%= key.to_s.dasherize %>">
+      <span class="stat__value"><%= number_with_delimiter(@status.counts.fetch(key), delimiter: ".") %></span>
+      <span class="stat__label"><%= label %></span>
+    </div>
+  <% end %>
+</section>
+
+<h2>Fila de jobs (Solid Queue)</h2>
+<section class="stats" id="jobs" aria-label="Fila de jobs">
+  <% { ready: "prontos para rodar", scheduled: "agendados", failed: "com falha", processes: "processos ativos" }.each do |key, label| %>
+    <div class="stat" id="jobs-<%= key %>">
+      <span class="stat__value"><%= number_with_delimiter(@status.jobs.fetch(key), delimiter: ".") %></span>
+      <span class="stat__label"><%= label %></span>
+    </div>
+  <% end %>
+</section>
+<% if @status.jobs[:processes].zero? %>
+  <p class="muted small">Nenhum processo do Solid Queue registrado: rode <code>bin/jobs</code> ou defina <code>SOLID_QUEUE_IN_PUMA=1</code> (veja docs/DEPLOY.md).</p>
+<% end %>
+
+<h2>Últimas execuções</h2>
+<% runs = @status.recent_runs %>
+<% if runs.any? %>
+  <table class="data-table" id="recent-runs">
+    <thead>
+      <tr>
+        <th scope="col">Início</th>
+        <th scope="col">Modalidade</th>
+        <th scope="col">Tentativa</th>
+        <th scope="col">Situação</th>
+        <th scope="col">Páginas</th>
+        <th scope="col">Recebidas</th>
+        <th scope="col">Gravadas</th>
+        <th scope="col">Ignoradas</th>
+        <th scope="col">Duração</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% runs.each do |run| %>
+        <tr>
+          <td><%= date_time_br(run.started_at) %></td>
+          <td><%= run.modality_id %></td>
+          <td><%= run.attempt %></td>
+          <td><%= run.status %></td>
+          <td><%= run.pages %></td>
+          <td><%= run.fetched_count %></td>
+          <td><%= run.upserted_count %></td>
+          <td><%= run.skipped_count %></td>
+          <td><%= run.duration ? "#{run.duration.round} s" : "—" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="muted">Nenhuma sincronização ainda. Rode <code>bin/rails pncp:sync</code>.</p>
+<% end %>
