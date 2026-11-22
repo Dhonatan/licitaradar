@@ -22,13 +22,13 @@ class SearchQueryPlanTest < ActiveSupport::TestCase
   end
 
   test "keyword search uses the GIN index on searchable" do
-    search = Tenders::Search.new(q: "agência de publicidade")
+    search = Tenders::Search.new({ q: "agência de publicidade" })
 
     assert_match "index_tenders_on_searchable", plan_for(full_text_only(search))
   end
 
   test "niche search uses the GIN index on searchable" do
-    search = Tenders::Search.new(niche: Niche.all.first.slug)
+    search = Tenders::Search.new({ niche: Niche.all.first.slug })
 
     assert_match "index_tenders_on_searchable", plan_for(full_text_only(search))
   end

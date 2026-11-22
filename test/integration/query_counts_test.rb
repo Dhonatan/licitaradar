@@ -1,14 +1,15 @@
 require "test_helper"
 
 # N+1 guard: the number of SQL queries of a page must not grow with the number of
-# records it lists.
+# records it lists. Queries answered by Active Record's query cache count too (the cache
+# can outlive a request in tests, and an N+1 is a bug even when it hits the cache).
 class QueryCountsTest < ActionDispatch::IntegrationTest
   IGNORED_QUERIES = /\A\s*(BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE SAVEPOINT)/i
 
   def count_queries(&block)
     count = 0
     counter = lambda do |*, payload|
-      count += 1 unless payload[:name] == "SCHEMA" || payload[:cached] || payload[:sql].match?(IGNORED_QUERIES)
+      count += 1 unless payload[:name] == "SCHEMA" || payload[:sql].match?(IGNORED_QUERIES)
     end
     ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
     count
