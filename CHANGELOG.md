@@ -4,12 +4,12 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## Unreleased
 
 Next: the React portal (Phase 2, [#1](https://github.com/Dhonatan/licitaradar/issues/1)).
 Open work is tracked in the [issues](https://github.com/Dhonatan/licitaradar/issues).
 
-## [0.1.0] — 2026-11-22
+## 0.1.0 — 2026-11-22
 
 First complete version of the core product, built in the one-week bootstrap sprint
 ([plan](docs/sprint/PLAN.md), [log](docs/sprint/LOG.md), [report](docs/sprint/REPORT.md)).
@@ -46,6 +46,3 @@ First complete version of the core product, built in the one-week bootstrap spri
   ([`docs/DEPLOY.md`](docs/DEPLOY.md)).
 - **Quality**: CI with lib tests, Rails tests on PostgreSQL, RuboCop, Brakeman and a Docker
   build + smoke test; query plan and N+1 tests ([`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)).
-
-[Unreleased]: https://github.com/Dhonatan/licitaradar/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Dhonatan/licitaradar/commits/v0.1.0

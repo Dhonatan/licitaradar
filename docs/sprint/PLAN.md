@@ -96,15 +96,15 @@ Default niche presets (configurable later): **Marketing & comunicação**, **Eve
 - [x] `docs/API.md` with examples (curl).
 - [x] Tests: mailer previews + tests, digest job, API request tests (auth, filters, errors).
 
-## Day 5 — Sun, Nov 22 · Hardening + release
+## Day 5 — Sun, Nov 22 · Hardening + release ✅
 
-- [ ] Error handling: sync retries/alerting in SyncRun, friendly 404/500 pages.
-- [ ] Performance: verify indexes used by search (EXPLAIN in a test or doc), N+1 checks.
-- [ ] `Dockerfile` (multi-stage, production), `bin/docker-entrypoint`, `.dockerignore`,
+- [x] Error handling: sync retries/alerting in SyncRun, friendly 404/500 pages.
+- [x] Performance: verify indexes used by search (EXPLAIN in a test or doc), N+1 checks.
+- [x] `Dockerfile` (multi-stage, production), `bin/docker-entrypoint`, `.dockerignore`,
       deploy guide `docs/DEPLOY.md` (Render/Fly/Kamal, required env vars, scheduler).
-- [ ] Admin status page `/status` (last sync per modality, counts) protected by basic auth env vars.
-- [ ] README polish: features, screenshots placeholder section, architecture diagram (Mermaid).
-- [ ] Update `ROADMAP.md`, write `CHANGELOG.md` (v0.1.0), open GitHub issues for the
+- [x] Admin status page `/status` (last sync per modality, counts) protected by basic auth env vars.
+- [x] README polish: features, screenshots placeholder section, architecture diagram (Mermaid).
+- [x] Update `ROADMAP.md`, write `CHANGELOG.md` (v0.1.0), open GitHub issues for the
       Phase 2 React portal and the backlog.
-- [ ] **Final report** in `docs/sprint/REPORT.md`: what exists, how to run it, what is
+- [x] **Final report** in `docs/sprint/REPORT.md`: what exists, how to run it, what is
       missing, risks, and suggested next steps.

@@ -390,3 +390,94 @@ One entry per working session, newest at the bottom.
   clients (no browser/SMTP in the sandbox); the HTML uses simple inline styles.
 - No `PATCH /api/v1/saved_searches/:id` yet (not in the plan); added to the ROADMAP backlog.
 - Nothing moved to the next day.
+
+## Day 5 — Sun, Nov 22, 2026
+
+**Starting point**
+- `main` green at `764a41e` (Day 4); nothing left over from earlier days.
+
+**Done**
+- Sync hardening: `SyncRun#attempt`; `SyncOpenTendersJob` re-enqueues only the failed
+  modalities (attempt 2 after 15 min, attempt 3 after 45 more) and, when the last attempt
+  fails, reports `SyncOpenTendersJob::SyncFailed` and e-mails `ADMIN_EMAIL`
+  (`AdminMailer#sync_failed`, text e-mail with each modality's error, failures in a row
+  and a link to `/status`). `SyncRun.fail_abandoned!` closes runs stuck "running" for more
+  than 3 hours at the start of every sync.
+- Friendly static error pages in Portuguese: 400, 404, 406 (unsupported browser), 422,
+  500, plus `robots.txt`. There was no `public/` at all: `allow_browser` would have raised
+  on old browsers because its 406 page was missing.
+- Performance: measured the search plans on a local PostgreSQL 16 with 60k synthetic rows
+  (all searches use indexes, 0.7–17 ms; no new index needed) and wrote
+  `docs/PERFORMANCE.md`. Tests: query plans with sequential scans disabled (GIN index for
+  keywords and niches, notifications index for the matcher, no seq scan for any search)
+  and N+1 guards (results page, API tenders and saved searches; the saved searches page
+  adds exactly one COUNT per search).
+- `Dockerfile` (multi-stage, Ruby 3.3.13 slim, jemalloc, non-root, assets precompiled),
+  `bin/docker-entrypoint` (`db:prepare` before the server, `SKIP_DB_PREPARE`),
+  `.dockerignore`, and a CI job that builds the image, boots it against PostgreSQL with
+  Solid Queue in Puma and requests `/up`, `/`, a search, a 404 and checks Solid Queue's
+  processes.
+- Admin status page `/status` (+ `.json`, 503 when unhealthy) behind basic auth with
+  `STATUS_USERNAME`/`STATUS_PASSWORD` (404 when unset): latest run, last success and
+  failures in a row per modality, counts, Solid Queue queue, last 20 runs.
+- `docs/DEPLOY.md` (env vars, process layouts, post-deploy checklist, Render, Fly.io,
+  Kamal, plain Docker, operations). README: features, screenshots placeholder,
+  architecture diagram (Mermaid, checked with mmdc), deploy section. Home page no longer
+  says the alerts are "em breve".
+- `CHANGELOG.md` (v0.1.0), ROADMAP updated, `.env.example` with `ADMIN_EMAIL` and
+  `STATUS_*`, DEVELOPMENT.md sections on sync reliability and the status page.
+- GitHub issues opened: #1 Phase 2 React portal, #2 e-mail confirmation, #3 API PATCH +
+  niches/modalities, #4 archive closed tenders, #5 shared cache for rate limits, #6 error
+  reporting, #7 first public deploy, #8 backlog (CSV, webhooks, stats, i18n).
+- Final report: `docs/sprint/REPORT.md` (Portuguese).
+- Rails suite: 292 runs, 0 failures (252 yesterday); lib: 38 runs.
+
+**Commits**
+- `839ebef` feat: retry failed sync modalities and alert the admins when they keep failing
+- `8843915` feat: add friendly error pages in Portuguese
+- `b39d213` test: check that searches use the indexes and pages have no N+1 queries
+- `a65859c` docs: add performance notes with the search query plans
+- `6dc1611` test: count cached queries in the N+1 guard and pass search params as a hash
+- `352bde8` chore: add a production Dockerfile and build + smoke test it in CI
+- `7e3cf04` feat: add the admin status page with the sync health per modality
+- `8d3cef4` docs: add the deploy guide (Docker, Render, Fly.io, Kamal)
+- `bf86524` docs: polish the README with features, screenshots section and architecture diagram
+- `fa6fbe9` docs: update the roadmap and add the v0.1.0 changelog
+- plus this docs commit (report, plan, log, changelog links)
+
+**CI**
+- One red run: `a65859c` (the two perf test commits). Errors: `Tenders::Search.new(q: ...)`
+  passed keywords instead of a params hash, and the N+1 counts differed by one because
+  Active Record's query cache survived between requests in the test (the "few" case had
+  a write that cleared it). Fixed in `6dc1611` by passing hashes and counting cached
+  queries too. Every other run green, including the new Docker job. The bot regenerated
+  `db/schema.rb` once (`49415c6`, `sync_runs.attempt`).
+
+**Decisions**
+- Retries live in the job (re-enqueue with the failed modalities and the attempt number)
+  rather than `retry_on`, because `Tenders::Sync` handles errors per modality and the job
+  itself never raises. Delays 15 and 45 minutes keep all retries well before the next
+  scheduled run (6 hours).
+- The admin alert goes out only after the last attempt (one e-mail per scheduled run
+  while the PNCP stays down, i.e. at most every 6 hours). No e-mail when `ADMIN_EMAIL` is
+  unset; the error is still reported.
+- Error pages are static files in `public/` (Rails' default mechanism) with inline CSS,
+  so they work even when the app or the asset pipeline is broken.
+- No index was added: the measured plans were already fast. Suggestions for when data
+  grows are in `docs/PERFORMANCE.md` (partial index for value sort, caching the open
+  count, archiving closed tenders).
+- `/status` without credentials configured raises a routing error (identical to a
+  non-existent page) instead of being open; JSON returns 503 when unhealthy so uptime
+  monitors alert. A modality is healthy when its latest run did not fail and it
+  succeeded within 12 hours (two sync intervals).
+- The Docker image runs `db:prepare` in the entrypoint (fine for one container); multi-host
+  setups set `SKIP_DB_PREPARE=1` and migrate in a release step.
+- No git tag was pushed: `v0.1.0` should be tagged when the first deploy is validated
+  (the changelog does not link to the tag yet).
+- Phase 2 and backlog work became GitHub issues (the API allowed it), referenced from the
+  ROADMAP and the report.
+
+**Open problems / notes**
+- Not yet run against the real PNCP or deployed (#7). E-mail addresses still unconfirmed
+  (#2). No error reporting service (#6). Rate limits per container (#5). Closed tenders
+  accumulate (#4). See "O que falta ou é frágil" in `docs/sprint/REPORT.md`.
