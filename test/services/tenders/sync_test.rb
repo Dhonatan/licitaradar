@@ -131,4 +131,19 @@ class Tenders::SyncTest < ActiveSupport::TestCase
 
     assert_requested :get, PROPOSTA_URL, query: hash_including("dataFinal" => "20270318", "tamanhoPagina" => "500"), times: 6
   end
+
+  test "records the attempt number on every run" do
+    runs = sync(modality_ids: [ 6, 8 ], attempt: 2)
+
+    assert_equal [ 2, 2 ], runs.map(&:attempt)
+  end
+
+  test "closes runs abandoned by a previous process before starting" do
+    stuck = SyncRun.create!(modality_id: 6, started_at: 5.hours.ago)
+
+    sync
+
+    assert stuck.reload.failed?
+    assert_equal 1, SyncRun.succeeded.count
+  end
 end

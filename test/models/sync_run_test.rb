@@ -33,4 +33,49 @@ class SyncRunTest < ActiveSupport::TestCase
     assert_equal "Dispensa de Licitação", run.modality_name
     assert_in_delta 90, run.duration, 1
   end
+
+  test "requires a positive attempt number" do
+    run = SyncRun.new(modality_id: 6, started_at: Time.current, attempt: 0)
+
+    assert_not run.valid?
+    assert run.errors.key?(:attempt)
+    assert_equal 1, SyncRun.new.attempt
+  end
+
+  test "fail_abandoned! closes only runs stuck as running for too long" do
+    now = Time.current.change(usec: 0)
+    stuck = SyncRun.create!(modality_id: 6, started_at: now - 4.hours)
+    busy = SyncRun.create!(modality_id: 8, started_at: now - 10.minutes)
+    done = SyncRun.create!(modality_id: 4, started_at: now - 5.hours, finished_at: now - 5.hours, status: :succeeded)
+
+    assert_equal 1, SyncRun.fail_abandoned!(now: now)
+
+    assert stuck.reload.failed?
+    assert_equal now, stuck.finished_at
+    assert_match "Interrompida", stuck.error_message
+    assert busy.reload.running?
+    assert done.reload.succeeded?
+  end
+
+  test "latest_by_modality returns the most recent run of each modality" do
+    SyncRun.create!(modality_id: 6, started_at: 2.days.ago, status: :failed)
+    latest_six = SyncRun.create!(modality_id: 6, started_at: 1.hour.ago, status: :succeeded)
+    only_eight = SyncRun.create!(modality_id: 8, started_at: 3.hours.ago, status: :failed)
+
+    latest = SyncRun.latest_by_modality
+
+    assert_equal({ 6 => latest_six, 8 => only_eight }, latest)
+  end
+
+  test "failures_in_a_row counts failures since the last success" do
+    SyncRun.create!(modality_id: 6, started_at: 3.days.ago, status: :failed)
+    SyncRun.create!(modality_id: 6, started_at: 2.days.ago, status: :succeeded)
+    SyncRun.create!(modality_id: 6, started_at: 1.day.ago, status: :failed)
+    SyncRun.create!(modality_id: 6, started_at: 1.hour.ago, status: :failed)
+    SyncRun.create!(modality_id: 8, started_at: 1.hour.ago, status: :failed)
+
+    assert_equal 2, SyncRun.failures_in_a_row(6)
+    assert_equal 1, SyncRun.failures_in_a_row(8)
+    assert_equal 0, SyncRun.failures_in_a_row(4)
+  end
 end

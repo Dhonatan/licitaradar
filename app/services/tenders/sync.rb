@@ -6,6 +6,8 @@ module Tenders
   # - Resilient: a modality that fails (API down, bad payload) is recorded as a failed
   #   SyncRun and the remaining modalities still sync.
   # - Records without a control number are skipped and counted.
+  # - Runs left "running" by a process that died are closed as failed first.
+  # - `attempt` is stored on each SyncRun (SyncOpenTendersJob retries failed modalities).
   #
   #   Tenders::Sync.call                       # all competitive modalities
   #   Tenders::Sync.call(modality_ids: [ 6 ])  # only "Pregão - Eletrônico"
@@ -19,24 +21,28 @@ module Tenders
 
     def initialize(client: Pncp::Client.new, modality_ids: Pncp::Modalities::COMPETITIVE,
                    until_date: Date.current + HORIZON_DAYS, page_size: Pncp::Client::MAX_PAGE_SIZE,
-                   max_pages: nil, batch_size: BATCH_SIZE, logger: Rails.logger)
+                   max_pages: nil, batch_size: BATCH_SIZE, attempt: 1, logger: Rails.logger)
       @client = client
       @modality_ids = Array(modality_ids).map(&:to_i)
       @until_date = until_date
       @page_size = page_size
       @max_pages = max_pages
       @batch_size = batch_size
+      @attempt = attempt
       @logger = logger
     end
 
     # Returns the SyncRun of each modality, in order.
     def call
+      abandoned = SyncRun.fail_abandoned!
+      @logger.warn("[Tenders::Sync] closed #{abandoned} abandoned run(s)") if abandoned.positive?
+
       @modality_ids.map { |modality_id| sync_modality(modality_id) }
     end
 
     private
       def sync_modality(modality_id)
-        run = SyncRun.create!(modality_id: modality_id, started_at: Time.current)
+        run = SyncRun.create!(modality_id: modality_id, started_at: Time.current, attempt: @attempt)
         seen_at = Time.current
         batch = {}
 

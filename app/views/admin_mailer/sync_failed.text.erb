@@ -1,0 +1,9 @@
+A sincronização com o PNCP falhou em <%= @runs.size %> <%= @runs.one? ? "modalidade" : "modalidades" %> mesmo depois das novas tentativas automáticas.
+
+<% @runs.each do |run| -%>
+- <%= run.modality_name %> (código <%= run.modality_id %>), tentativa <%= run.attempt %>, iniciada em <%= run.started_at.strftime("%d/%m/%Y %H:%M") %>
+  Erro: <%= run.error_message.presence || "sem mensagem" %>
+  Falhas seguidas: <%= SyncRun.failures_in_a_row(run.modality_id) %>
+<% end -%>
+
+As licitações já salvas continuam no ar; só deixam de ser atualizadas até a próxima sincronização que der certo (a cada 6 horas).

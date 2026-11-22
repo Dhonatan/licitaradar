@@ -8,6 +8,7 @@ Dir[File.expand_path("test_helpers/**/*.rb", __dir__)].sort.each { |file| requir
 module ActiveSupport
   class TestCase
     include RecordsTestHelper
+    include EnvTestHelper
 
     # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors)

@@ -114,3 +114,18 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
   `meta.filters` echoes what was applied. Saved search criteria use the same names
   (`q` ↔ `query`, `niche` ↔ `niche_slug`).
 - Update `docs/API.md` with every API change.
+
+## Sync reliability
+
+- Three layers of retries: `Pncp::Client` retries each request (429/5xx/network errors,
+  exponential backoff); `Tenders::Sync` isolates modalities (one failing modality is a
+  failed `SyncRun`, the others continue); `SyncOpenTendersJob` re-enqueues itself for the
+  failed modalities only (`attempt` 2 after 15 min, 3 after 45 more) and, when the last
+  attempt fails, reports `SyncOpenTendersJob::SyncFailed` to `Rails.error` and e-mails
+  `ADMIN_EMAIL` (`AdminMailer#sync_failed`; nothing is sent when it is unset).
+- `SyncRun#attempt` says which try a run was. Runs left `running` for more than
+  `SyncRun::ABANDONED_AFTER` (a process died mid-sync) are closed as failed at the start
+  of the next sync.
+- Tests that need a failing modality stub HTTP 400: the client does not retry it, so no
+  backoff sleeps slow the suite down. `with_env` (test/test_helpers) sets ENV variables
+  for one block.
