@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+# Entry point of the production image (see Dockerfile).
+#
+# Before the web server starts, `db:prepare` creates the database if needed, loads
+# db/schema.rb into an empty database or runs pending migrations. Other commands
+# (bin/jobs, bin/rails console, bin/rails pncp:sync) run as they are.
+# Set SKIP_DB_PREPARE=1 when migrations run as a separate release step.
+
+if [ -z "${SKIP_DB_PREPARE}" ] && [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+  ./bin/rails db:prepare
+fi
+
+exec "${@}"

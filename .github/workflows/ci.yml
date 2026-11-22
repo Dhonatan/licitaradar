@@ -108,3 +108,35 @@ jobs:
           git commit -m "chore: regenerate Gemfile.lock and db/schema.rb [skip ci]"
           git pull --rebase origin main
           git push origin HEAD:main
+
+  docker:
+    name: Docker image (build + smoke test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the production image
+        run: docker build --tag licitaradar:ci .
+      - name: Boot it against PostgreSQL and request a few pages
+        run: |
+          docker network create licitaradar
+          docker run --detach --name db --network licitaradar -e POSTGRES_PASSWORD=postgres postgres:16
+          for i in $(seq 1 30); do docker exec db pg_isready -U postgres && break; sleep 1; done
+          docker run --detach --name app --network licitaradar --publish 3000:3000 \
+            -e DATABASE_URL=postgres://postgres:postgres@db:5432/licitaradar_production \
+            -e SECRET_KEY_BASE="$(openssl rand -hex 64)" \
+            -e APP_HOST=localhost -e FORCE_SSL=false -e ASSUME_SSL=false -e SOLID_QUEUE_IN_PUMA=1 \
+            licitaradar:ci
+          for i in $(seq 1 60); do curl --silent --fail http://localhost:3000/up && break; sleep 1; done
+          curl --silent --fail --output /dev/null http://localhost:3000/up
+          curl --silent --fail --output /dev/null http://localhost:3000/
+          curl --silent --fail --output /dev/null "http://localhost:3000/tenders?q=publicidade"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:3000/tenders/0)" = "404"
+          # Solid Queue runs inside Puma (SOLID_QUEUE_IN_PUMA=1) and registers its processes.
+          for i in $(seq 1 20); do
+            docker exec app ./bin/rails runner 'exit(SolidQueue::Process.any? ? 0 : 1)' && queue_ok=1 && break
+            sleep 2
+          done
+          test "${queue_ok}" = "1"
+      - name: Container logs
+        if: always()
+        run: docker logs app || true
