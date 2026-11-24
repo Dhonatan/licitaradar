@@ -1,6 +1,6 @@
 # Bootstrap sprint — day-by-day plan
 
-Goal: by **Sunday, Nov 22, 2026** LicitaRadar is a working product: it syncs open tenders
+Sprint 1 goal: by **Sunday, Nov 22, 2026** LicitaRadar is a working product: it syncs open tenders
 from the PNCP, lets anyone search them, lets users save searches and receive a daily
 e-mail digest, exposes a JSON API for the future React portal, and is ready to deploy.
 
@@ -108,3 +108,100 @@ Default niche presets (configurable later): **Marketing & comunicação**, **Eve
       Phase 2 React portal and the backlog.
 - [x] **Final report** in `docs/sprint/REPORT.md`: what exists, how to run it, what is
       missing, risks, and suggested next steps.
+
+---
+
+# Sprint 2 — Nov 25–29, 2026 · Launch readiness + engagement features
+
+Goal: close the pre-launch gaps from `docs/sprint/REPORT.md` and add features that make
+users come back (documents, watchlists, reminders, public pages, webhooks). Same working
+rules as Sprint 1 (see the top of this file). The **React portal (Phase 2), paid plans,
+WhatsApp/Telegram alerts and PDF indexing are intentionally out of scope** — they are the
+work ahead.
+
+Note on the PNCP "integration" API (documents and items): it lives under
+`https://pncp.gov.br/api/pncp/v1` (not `/api/consulta`). Confirm the exact paths and field
+names from the official manual ("Manual de Integração PNCP" / "Manual das APIs de
+Consultas", e.g. via web search) before writing fixtures, and keep fixtures fictional.
+
+## Day 6 — Wed, Nov 25 · Pre-launch hardening
+
+- [ ] **E-mail confirmation (#2):** `confirmed_at` on users, signed confirmation token
+      (expires in 3 days), confirmation e-mail on sign-up, resend page, banner for
+      unconfirmed accounts; digests and saved-search alerts only go to confirmed users;
+      e-mail change requires re-confirmation. Tests for every path.
+- [ ] **Error reporting (#6):** `ErrorReporting` subscriber on `Rails.error` that logs with
+      context and, when `SENTRY_DSN` is set, forwards to Sentry (`sentry-ruby` +
+      `sentry-rails`, disabled when the env var is missing). Document in `docs/DEPLOY.md`.
+- [ ] **Archive old tenders (#4):** `Tenders::Archive` service + recurring job (weekly):
+      delete tenders closed more than `ARCHIVE_AFTER_DAYS` (default 180) days ago that are
+      not referenced by notifications or watchlists (see Day 8 — make the query easy to
+      extend), in batches; record counts in the log. Tests.
+- [ ] Cache the home page counters for 5 minutes (`docs/PERFORMANCE.md` note) with a test.
+- [ ] Close issues #2, #4, #6 in commit messages (`Closes #N`) when done.
+
+## Day 7 — Thu, Nov 26 · Tender documents + items (long)
+
+- [ ] `lib/pncp`: `Pncp::IntegrationClient` (or extend `Client` with a second base URL)
+      for `GET /v1/orgaos/{cnpj}/compras/{ano}/{sequencial}/arquivos` (documents) and
+      `.../itens` (items, paginated). Normalizers `DocumentNormalizer` and
+      `ItemNormalizer` (title, type, URL, published at; item number, description,
+      quantity, unit, unit/total estimated value). Lib tests with fictional fixtures.
+- [ ] Models `TenderDocument` and `TenderItem` (belongs_to tender, unique per sequence),
+      `Tenders::FetchDetails` service + `FetchTenderDetailsJob`: fetched lazily the first
+      time a tender page is opened and refreshed when the tender's `source_updated_at`
+      changes; never blocks the page (Turbo Frame with a loading state).
+- [ ] Tender page: "Documentos do edital" list (type, title, link to PNCP) and "Itens"
+      table (quantity, unit, estimated values; "sigiloso" when missing).
+- [ ] Include item descriptions in search: add an `items_text` column to tenders (filled
+      after fetching items) and extend the generated `searchable` column — or a second
+      tsvector — so searches also match items. Migration + tests that the index is used.
+- [ ] API v1: include `documents` and `items` in `GET /api/v1/tenders/:id`; update
+      `docs/API.md`.
+
+## Day 8 — Fri, Nov 27 · Watchlist, reminders, notes, exports
+
+- [ ] **Watchlist:** "Acompanhar" button on tender pages and results (`Watch` model,
+      user + tender, unique); "Minhas licitações" page sorted by deadline with status
+      badges (aberta, encerra hoje, encerrada).
+- [ ] **Deadline reminders:** e-mail N days before the proposals deadline (user setting:
+      off / 1 / 3 / 7 days, default 3), sent by a daily job, never twice for the same
+      watch + deadline; if the PNCP changes the deadline, a new reminder is allowed.
+- [ ] **Private notes** on watched tenders (plain text, per user) with Turbo inline editing.
+- [ ] **Calendar feed:** per-user secret `.ics` URL (`/calendario/:token.ics`) with the
+      deadlines of watched tenders; regenerate-token button. Tests for the iCalendar output.
+- [ ] **CSV export** of search results and of the watchlist (max 5,000 rows, streamed,
+      UTF-8 with BOM so Excel opens accents correctly).
+- [ ] API v1: `GET/POST/DELETE /api/v1/watches`; update `docs/API.md`.
+
+## Day 9 — Sat, Nov 28 · Public pages, SEO, stats
+
+- [ ] **Agency pages** `/orgaos/:cnpj`: agency name, location, open tenders, totals.
+      Link agency names everywhere.
+- [ ] **Landing pages** per state (`/licitacoes/:uf`) and per niche (`/nichos/:slug`) with
+      their open tenders, short intro text and links between them.
+- [ ] **Public statistics** `/estatisticas`: open tenders and estimated value by state,
+      modality and niche, closing this week, updated daily (cached), charts in plain
+      HTML/CSS bars or inline SVG (no JS build).
+- [ ] SEO: per-page `<title>`/meta description, canonical URLs, Open Graph tags,
+      `sitemap.xml` (home, landing pages, agencies, open tenders), `robots.txt`.
+- [ ] Friendly, stable tender URLs (`/licitacoes/:id-slug`) keeping old URLs working.
+- [ ] Tests for every page, the sitemap and that closed tenders are not in the sitemap.
+
+## Day 10 — Sun, Nov 29 · Webhooks, API completion, release v0.2.0
+
+- [ ] **Webhooks:** per-user endpoints (URL + secret), event `saved_search.matches`
+      sent when the digest job finds new matches (same data as the e-mail), HMAC-SHA256
+      signature header, timestamp, retries with backoff (Active Job), delivery log with
+      status/response code, "send test event" button, auto-disable after repeated
+      failures. Block private/loopback addresses (SSRF). Docs in `docs/WEBHOOKS.md`.
+- [ ] **API completion (#3):** `PATCH /api/v1/saved_searches/:id`, `GET /api/v1/niches`,
+      `GET /api/v1/modalities`, `GET /api/v1/states`, list of tenders already notified
+      for a search. Close #3.
+- [ ] **OpenAPI 3.1 spec** `docs/openapi.yaml` describing the whole API v1 + a test that
+      every API route is documented.
+- [ ] Update `README.md`, `ROADMAP.md`, `CHANGELOG.md` (**v0.2.0**), close finished issues,
+      open issues for what is left.
+- [ ] **Sprint 2 report** in `docs/sprint/REPORT-2.md` (Brazilian Portuguese): what was
+      built per day, commits, test/CI numbers, what is missing or fragile, risks, next
+      steps (React portal first).
