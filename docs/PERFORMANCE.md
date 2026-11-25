@@ -60,8 +60,11 @@ Known, accepted per-record queries:
   saved search per day); revisit that if `notifications` grows large.
 - If sorting by value gets slow (hundreds of thousands of open rows), add a partial index
   `ON tenders (estimated_value DESC NULLS LAST) WHERE status_id = 1`.
-- `COUNT(*)` of all open tenders (home page and results without filters) is a sequential
-  scan; with much more data, cache it for a few minutes (`Rails.cache`).
+- `COUNT(*)` of all open tenders is a sequential scan. The home page caches its counters
+  (open, closing in 7 days, last sync) in `Rails.cache` for 5 minutes
+  (`PagesController::COUNTERS_EXPIRE_IN`), so a traffic spike on the landing page costs
+  one set of counts every 5 minutes. The results page without filters still counts on
+  every request; cache it too if it shows up in the logs.
 - Deep pagination uses `OFFSET` (capped at page 400 by `Tenders::Search::MAX_PAGE`).
 - Re-run the plans with real data: `EXPLAIN (ANALYZE, BUFFERS)` on the SQL logged in
   development (`bin/rails server`, then search).

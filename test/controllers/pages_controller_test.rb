@@ -47,6 +47,24 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select "#stat-sync .stat__label", /ainda não sincronizado/
   end
 
+  test "home counters are cached for 5 minutes" do
+    create_tender(1)
+    get root_path
+    assert_select "#stat-open .stat__value", "1"
+
+    create_tender(2)
+    SyncRun.create!(modality_id: 6, status: "succeeded", started_at: 1.minute.ago, finished_at: Time.current)
+    get root_path
+    assert_select "#stat-open .stat__value", "1"
+    assert_select "#stat-sync .stat__label", /ainda não sincronizado/
+
+    travel 5.minutes + 1.second do
+      get root_path
+    end
+    assert_select "#stat-open .stat__value", "2"
+    assert_select "#stat-sync .stat__label", /última sincronização/
+  end
+
   test "health check responds" do
     get rails_health_check_path
 
