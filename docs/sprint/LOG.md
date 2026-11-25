@@ -481,3 +481,95 @@ One entry per working session, newest at the bottom.
 - Not yet run against the real PNCP or deployed (#7). E-mail addresses still unconfirmed
   (#2). No error reporting service (#6). Rate limits per container (#5). Closed tenders
   accumulate (#4). See "O que falta ou é frágil" in `docs/sprint/REPORT.md`.
+
+## Day 6 — Wed, Nov 25 · Pre-launch hardening ✅
+
+**Done**
+- **E-mail confirmation (#2, closed):** `users.confirmed_at` + `users.unconfirmed_email`;
+  `generates_token_for :email_confirmation` (3 days) embedding both addresses, so a link
+  dies once its change is confirmed or replaced. `EmailConfirmationsMailer#confirm` on
+  sign-up; `GET /email_confirmations/:token` confirms (works signed in or out, idempotent);
+  `/email_confirmations/new` resends (same answer for unknown/confirmed addresses, rate
+  limited); banner with a resend button for signed-in unconfirmed users; link on the login
+  page. New "Minha conta" page (`/account`): e-mail + status, change the address with the
+  current password — the new address waits in `unconfirmed_email` and only replaces the
+  old one (login and alerts) after its link is opened; typing the current address cancels
+  a pending change; a confirmation fails cleanly if the address was taken meanwhile. A
+  password reset also confirms the address it reached. `SavedSearch.notifiable` joins
+  confirmed users, so the digest job and `Digest` skip unconfirmed accounts; `/status`
+  counts accounts without a confirmed e-mail.
+- **Error reporting (#6, closed):** `ErrorReporting` (`lib/error_reporting.rb`) subscribed
+  to `Rails.error`: logs `[ErrorReporting] Class: message (handled= severity= source=)
+  context={...}` + 5 backtrace lines; context reduced to plain data (`User#12`,
+  `SomeJob (job id)`, controllers as `Class#action`) and filtered with
+  `config.filter_parameters`; forwards to Sentry via `ErrorReporting::SentryForwarder` only
+  when `Sentry.initialized?`. `sentry-ruby` + `sentry-rails` gems, `Sentry.init` only when
+  `SENTRY_DSN` is set (`send_default_pii = false`, tracing off unless
+  `SENTRY_TRACES_SAMPLE_RATE`). Documented in `docs/DEPLOY.md` (env table + "Error
+  tracking") and `.env.example` (commented).
+- **Archive old tenders (#4, closed):** `Tenders::Archive` deletes in batches of 1,000
+  tenders closed more than `ARCHIVE_AFTER_DAYS` (default 180) days ago — tenders without a
+  closing date count from `updated_at` — unless a model in `KEPT_WHEN_REFERENCED_BY`
+  (today `Notification`) refers to them. `ArchiveOldTendersJob` (Sundays 03:15 Brasília in
+  `config/recurring.yml`) logs `Tender archive: N deleted, M kept (referenced)`;
+  `bin/rails tenders:archive` runs it by hand.
+- **Home counters cached** 5 minutes in `Rails.cache` (open, closing in 7 days, last sync);
+  note in `docs/PERFORMANCE.md`.
+- CI: the Docker job now runs `bundle lock` before `docker build` (see CI below).
+- Docs: DEVELOPMENT.md (e-mail confirmation, archiving, error reporting), DEPLOY.md,
+  PERFORMANCE.md.
+- Rails suite: 349 runs, 1597 assertions, 0 failures (292 at the end of sprint 1);
+  lib: 38 runs.
+
+**Commits**
+- `8e8cee7` feat: track e-mail confirmation and pending e-mail changes on users
+- `2ff2ed4` feat: confirm e-mail addresses on sign-up and on e-mail changes
+- `1ac4420` feat: send daily digests only to users who confirmed their e-mail (Closes #2)
+- `4933380` feat: log every Rails.error report and forward it to Sentry when configured (Closes #6)
+- `beea0e2` feat: archive tenders closed more than 180 days ago every week (Closes #4)
+- `01d636a` ci: refresh Gemfile.lock before building the Docker image
+- `c084acc` perf: cache the home page counters for 5 minutes
+- plus this docs commit; the bot regenerated `db/schema.rb` (`57e67fa`) and
+  `Gemfile.lock` (`41cc305`, Sentry gems)
+
+**CI**
+- One red run: `4933380`. Only the Docker job failed — the image installs gems in frozen
+  mode and the new Sentry gems were not in `Gemfile.lock` yet (the Rails job commits it
+  after its tests, with `[skip ci]`). Rails tests, lint and Brakeman were green on that
+  run. Fixed for good in `01d636a` (the Docker job refreshes the lockfile first, like the
+  other jobs). Every later run green, including the Docker smoke test.
+
+**Decisions**
+- Column is `confirmed_at` (as in the plan; issue #2 said `email_confirmed_at`).
+- Existing accounts are **not** backfilled as confirmed: nothing proves they own their
+  address, and there is no public deploy yet. After deploying, existing users see the
+  banner and stop getting digests until they confirm. To keep an account you trust
+  receiving alerts: `User.find_by(email_address: "...").update!(confirmed_at: Time.current)`.
+- Unconfirmed users can still sign in, save searches and use the API; only e-mail alerts
+  wait for the confirmation (the abuse in #2 is unsolicited mail).
+- E-mail change uses a pending `unconfirmed_email` (login and alerts stay on the old,
+  confirmed address until the new one is confirmed) instead of switching immediately, so
+  a typo cannot lock someone out or send alerts to a stranger. The change form requires
+  the current password and is rate limited.
+- The confirmation link is a GET that confirms directly (mail scanners pre-fetching it
+  only prove the mailbox received it). It redirects to login when the browser is signed out.
+- `ErrorReporting` lives in `lib/` and is required by its initializer (ignored by the
+  autoloader): reloadable constants are not available while the app boots. Sentry is
+  fed by our subscriber (everything reported to `Rails.error`) and by sentry-rails' own
+  request/job capture; Sentry marks captured exceptions, so one error is sent once.
+  Exception messages are sent unfiltered (documented: keep e-mails/tokens out of them).
+- Archive deletes rows (with `delete_all`, no callbacks) instead of only blanking `raw`:
+  notified tenders are kept whole, so every link ever e-mailed still opens the tender
+  page; other old tenders return the normal 404. The weekly schedule (Sunday 03:15) sits
+  between the 00:30 and 06:30 syncs. Counts go to the job log only — `/status` does not
+  show them yet (Solid Queue does not keep job return values).
+- Home counters cache key `pages/home/counters`, 5 minutes, not invalidated by the sync
+  (at most 5 minutes stale after a sync that runs every 6 hours).
+
+**Open problems / notes**
+- Sentry was not exercised against a real DSN here (no network); the forwarder is tested
+  with a fake client. Check the first real event after deploy (#7).
+- Day 8 (watchlist) must add `Watch` to `Tenders::Archive::KEPT_WHEN_REFERENCED_BY`, and
+  Day 7's documents/items tables should cascade on tender deletion.
+- Still open from sprint 1: first deploy (#7), shared cache for rate limits (#5).
+- Nothing moved to Day 7.

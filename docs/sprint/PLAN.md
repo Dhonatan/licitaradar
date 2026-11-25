@@ -124,21 +124,21 @@ Note on the PNCP "integration" API (documents and items): it lives under
 names from the official manual ("Manual de Integração PNCP" / "Manual das APIs de
 Consultas", e.g. via web search) before writing fixtures, and keep fixtures fictional.
 
-## Day 6 — Wed, Nov 25 · Pre-launch hardening
+## Day 6 — Wed, Nov 25 · Pre-launch hardening ✅
 
-- [ ] **E-mail confirmation (#2):** `confirmed_at` on users, signed confirmation token
+- [x] **E-mail confirmation (#2):** `confirmed_at` on users, signed confirmation token
       (expires in 3 days), confirmation e-mail on sign-up, resend page, banner for
       unconfirmed accounts; digests and saved-search alerts only go to confirmed users;
       e-mail change requires re-confirmation. Tests for every path.
-- [ ] **Error reporting (#6):** `ErrorReporting` subscriber on `Rails.error` that logs with
+- [x] **Error reporting (#6):** `ErrorReporting` subscriber on `Rails.error` that logs with
       context and, when `SENTRY_DSN` is set, forwards to Sentry (`sentry-ruby` +
       `sentry-rails`, disabled when the env var is missing). Document in `docs/DEPLOY.md`.
-- [ ] **Archive old tenders (#4):** `Tenders::Archive` service + recurring job (weekly):
+- [x] **Archive old tenders (#4):** `Tenders::Archive` service + recurring job (weekly):
       delete tenders closed more than `ARCHIVE_AFTER_DAYS` (default 180) days ago that are
       not referenced by notifications or watchlists (see Day 8 — make the query easy to
       extend), in batches; record counts in the log. Tests.
-- [ ] Cache the home page counters for 5 minutes (`docs/PERFORMANCE.md` note) with a test.
-- [ ] Close issues #2, #4, #6 in commit messages (`Closes #N`) when done.
+- [x] Cache the home page counters for 5 minutes (`docs/PERFORMANCE.md` note) with a test.
+- [x] Close issues #2, #4, #6 in commit messages (`Closes #N`) when done.
 
 ## Day 7 — Thu, Nov 26 · Tender documents + items (long)
 
