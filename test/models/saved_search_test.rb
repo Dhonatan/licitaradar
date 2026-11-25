@@ -95,6 +95,13 @@ class SavedSearchTest < ActiveSupport::TestCase
     assert_equal [ alerted ], SavedSearch.notifiable.to_a
   end
 
+  test "notifiable leaves out searches of users who did not confirm their e-mail" do
+    alerted = @user.saved_searches.create!(query: "a")
+    create_user(confirmed: false).saved_searches.create!(query: "a")
+
+    assert_equal [ alerted ], SavedSearch.notifiable.to_a
+  end
+
   test "is destroyed with its user" do
     @user.saved_searches.create!(query: "buffet")
 

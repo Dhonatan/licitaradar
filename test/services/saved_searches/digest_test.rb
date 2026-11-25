@@ -26,6 +26,17 @@ module SavedSearches
       assert_not digest.empty?
     end
 
+    test "is empty for a user who did not confirm the e-mail" do
+      create_open_tender(object_description: "Serviço de buffet")
+      @user.update!(confirmed_at: nil)
+
+      digest = Digest.new(@user)
+
+      assert_empty digest.saved_searches
+      assert digest.empty?
+      assert_no_emails { assert_not digest.deliver }
+    end
+
     test "keeps the most urgent tenders per search and counts the rest" do
       tenders = Array.new(Digest::TENDERS_PER_SEARCH + 2) do |index|
         create_open_tender(object_description: "Serviço de buffet", proposals_close_at: (index + 1).days.from_now)

@@ -53,6 +53,7 @@ class SystemStatusTest < ActiveSupport::TestCase
     create_open_tender
     create_open_tender(created_at: 2.days.ago)
     user = create_user
+    create_user(confirmed: false)
     saved_search = user.saved_searches.create!(name: "Eventos", query: "eventos")
     Notification.create!(saved_search: saved_search, tender: Tender.first, sent_at: 1.hour.ago)
 
@@ -60,6 +61,7 @@ class SystemStatusTest < ActiveSupport::TestCase
 
     assert_equal 2, counts[:tenders]
     assert_equal 1, counts[:new_tenders_last_24h]
+    assert_equal 1, counts[:unconfirmed_users]
     assert_equal 1, counts[:notifiable_saved_searches]
     assert_equal 1, counts[:notifications_last_24h]
   end

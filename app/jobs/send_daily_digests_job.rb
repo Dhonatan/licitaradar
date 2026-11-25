@@ -1,5 +1,5 @@
-# Sends the daily e-mail digest (see SavedSearches::Digest) to every user with at least
-# one active saved search with daily alerts on. Scheduled every morning in
+# Sends the daily e-mail digest (see SavedSearches::Digest) to every confirmed user with
+# at least one active saved search with daily alerts on (SavedSearch.notifiable). Scheduled every morning in
 # config/recurring.yml; running it again the same day only sends what is new.
 class SendDailyDigestsJob < ApplicationJob
   queue_as :default

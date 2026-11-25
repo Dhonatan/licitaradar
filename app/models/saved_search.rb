@@ -32,7 +32,8 @@ class SavedSearch < ApplicationRecord
   validate :saved_searches_per_user_limit, on: :create
 
   scope :active, -> { where(active: true) }
-  scope :notifiable, -> { active.where(notify_daily: true) }
+  # Searches that get the daily digest: active, alerts on and the owner's e-mail confirmed.
+  scope :notifiable, -> { active.where(notify_daily: true).joins(:user).merge(User.confirmed) }
   scope :by_name, -> { order(Arel.sql("lower(saved_searches.name)"), :id) }
 
   # Builds a saved search from Tenders::Search-style params (q, niche, states, ...),

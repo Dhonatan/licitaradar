@@ -12,6 +12,7 @@ class SendDailyDigestsJobTest < ActiveJob::TestCase
     create_user(email_address: "sem-alerta@example.com").saved_searches.create!(query: "buffet", notify_daily: false)
     create_user(email_address: "pausada@example.com").saved_searches.create!(query: "buffet", active: false)
     create_user(email_address: "sem-buscas@example.com")
+    create_user(email_address: "nao-confirmada@example.com", confirmed: false).saved_searches.create!(query: "buffet")
   end
 
   test "sends one e-mail per user with news, only for active searches with daily alerts" do
@@ -59,6 +60,19 @@ class SendDailyDigestsJobTest < ActiveJob::TestCase
     assert_equal({ users: 2, sent: 1, failed: 1 }, stats)
     assert_equal [ "bia@example.com" ], ActionMailer::Base.deliveries.last.to
     assert_empty Notification.where(saved_search: @ana.saved_searches)
+  end
+
+  test "starts sending once the user confirms the e-mail" do
+    unconfirmed = User.find_by!(email_address: "nao-confirmada@example.com")
+    create_open_tender(object_description: "Serviço de buffet")
+    SendDailyDigestsJob.perform_now
+
+    unconfirmed.confirm_email
+
+    assert_emails 1 do
+      assert_equal({ users: 3, sent: 1, failed: 0 }, SendDailyDigestsJob.perform_now)
+    end
+    assert_equal [ "nao-confirmada@example.com" ], ActionMailer::Base.deliveries.last.to
   end
 
   test "is enqueued on the default queue" do

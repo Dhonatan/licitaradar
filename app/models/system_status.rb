@@ -44,6 +44,7 @@ class SystemStatus
       closing_this_week: Tender.closing_within(7).count,
       new_tenders_last_24h: Tender.where(created_at: (checked_at - 24.hours)..).count,
       users: User.count,
+      unconfirmed_users: User.where(confirmed_at: nil).count,
       saved_searches: SavedSearch.count,
       notifiable_saved_searches: SavedSearch.notifiable.count,
       notifications_last_24h: Notification.where(sent_at: (checked_at - 24.hours)..).count,

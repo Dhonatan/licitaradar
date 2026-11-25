@@ -71,6 +71,16 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
 - The default locale is `pt-BR` (`config/locales/pt-BR.yml`: validation messages and
   attribute names). Missing keys fall back to Rails' English, so number/date helpers keep
   their explicit formats — add Portuguese keys only for what the UI shows.
+- E-mail confirmation: `users.confirmed_at` is nil until the link of
+  `EmailConfirmationsMailer#confirm` is opened (`generates_token_for :email_confirmation`,
+  3 days; the token embeds `email_address` and `unconfirmed_email`, so it dies when either
+  changes). Sign-up sends it; `/email_confirmations/new` resends it (same answer for any
+  address); signed-in unconfirmed users see a banner with a resend button. Changing the
+  e-mail on `/account` (current password required) stores the new address in
+  `unconfirmed_email`: login and alerts keep the old one until the new one is confirmed.
+  A password reset also confirms the address. **Only confirmed users get alerts**
+  (`SavedSearch.notifiable` joins `User.confirmed`). `create_user` in tests makes confirmed
+  users unless `confirmed: false`.
 - `SavedSearch` stores the `Tenders::Search` params: `query` (= `q`), `niche_slug`
   (= `niche`) and the other filters in `filters` jsonb. They are normalized by
   `Tenders::Search` before validation; `saved_search.search` rebuilds the search.
