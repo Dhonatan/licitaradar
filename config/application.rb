@@ -16,7 +16,8 @@ module Licitaradar
     config.load_defaults 8.1
 
     # lib/ holds framework-independent code (e.g. the PNCP client in lib/pncp).
-    config.autoload_lib(ignore: %w[ assets tasks ])
+    # error_reporting.rb is required by its initializer (it is needed while booting).
+    config.autoload_lib(ignore: %w[ assets tasks error_reporting.rb ])
 
     # Brazilian public procurement dates are published in Brasília time.
     config.time_zone = "Brasilia"

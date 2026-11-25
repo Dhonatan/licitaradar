@@ -30,6 +30,9 @@ working image.
 | `JOB_CONCURRENCY` | no | Solid Queue worker processes (default 1). |
 | `ADMIN_EMAIL` | recommended | Receives an alert when the PNCP sync keeps failing (comma-separated list). |
 | `STATUS_USERNAME`, `STATUS_PASSWORD` | recommended | Enable the admin page `/status` (basic auth). Unset = page disabled. |
+| `SENTRY_DSN` | recommended | Sends errors to [Sentry](https://sentry.io) (see "Error tracking" below). Unset = errors only go to the logs. |
+| `SENTRY_ENVIRONMENT` | no | Environment name shown in Sentry (default: `production`). |
+| `SENTRY_TRACES_SAMPLE_RATE` | no | Share of requests traced for performance, `0`–`1` (default `0`, off). |
 | `RAILS_MAX_THREADS` | no | Puma threads and DB pool size (default 3 threads, pool 5). |
 | `PORT` | no | HTTP port (default 3000). |
 | `FORCE_SSL`, `ASSUME_SSL` | no | Default `true`: the app expects to sit behind an HTTPS proxy. Set both to `false` only for local tests over plain HTTP. |
@@ -211,5 +214,18 @@ Put an HTTPS reverse proxy (Caddy, nginx, Traefik) in front of it, or set
 - **Failed jobs:** counted on `/status`; inspect them in a console with
   `SolidQueue::FailedExecution.last(10)` and retry with `SolidQueue::FailedExecution.find(id).retry`.
 - **Logs:** stdout, tagged with the request id.
+- **Error tracking:** everything reported to `Rails.error` (unhandled exceptions in
+  requests and jobs, plus the handled ones the app reports: a failing sync modality, a
+  digest that failed for one user, the sync giving up after its retries) is logged as
+  `[ErrorReporting] Class: message (handled=… severity=… source=…) context={…}` by
+  `ErrorReporting` ([`lib/error_reporting.rb`](../lib/error_reporting.rb)). Set
+  `SENTRY_DSN` (a project of type Rails/Ruby; free tier is enough to start) and the same
+  reports go to Sentry, together with sentry-rails' own capture of request and job
+  exceptions (an error caught by both is sent once). Personal data stays out:
+  `send_default_pii` is off (no IPs, cookies or request bodies) and context keys matching
+  `config.filter_parameters` (e-mail, token, password…) are replaced by `[FILTERED]`.
+  Exception messages are sent as they are, so do not put e-mail addresses in them.
+  Other services (Honeybadger, AppSignal…) can be plugged in the same way: a forwarder
+  object passed to `ErrorReporting.new` in `config/initializers/error_reporting.rb`.
 - **Data growth:** closed tenders are kept (see [`docs/PERFORMANCE.md`](PERFORMANCE.md));
   watch the database size.

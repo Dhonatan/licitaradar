@@ -12,6 +12,8 @@ gem "stimulus-rails"
 gem "bootsnap", require: false
 gem "bcrypt", "~> 3.1.7" # has_secure_password
 gem "solid_queue" # background and recurring jobs, tables in the app's database
+gem "sentry-ruby" # error tracking, only when SENTRY_DSN is set (config/initializers/sentry.rb)
+gem "sentry-rails"
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
 group :development, :test do
