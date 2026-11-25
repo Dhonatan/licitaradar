@@ -145,3 +145,23 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
   when its latest run did not fail and it succeeded in the last `SystemStatus::STALE_AFTER`
   (12 h). `/status.json` answers 503 when any competitive modality is unhealthy, for
   uptime monitors.
+
+## Archiving old tenders
+
+- `Tenders::Archive` deletes tenders whose proposals closed more than `ARCHIVE_AFTER_DAYS`
+  (default 180) days ago — or, without a closing date, last updated that long ago — in
+  batches with `delete_all`. Tenders referenced by any model in
+  `Tenders::Archive::KEPT_WHEN_REFERENCED_BY` (today `Notification`) are kept so old
+  digest links keep working. **Every new table with a `tender_id` (watchlists, documents,
+  items...) must be added there or decide explicitly to cascade.**
+- `ArchiveOldTendersJob` runs it weekly (`config/recurring.yml`, Sundays 03:15) and logs
+  the counts; `bin/rails tenders:archive` runs it by hand.
+
+## Error reporting
+
+- Report handled errors with `Rails.error.report(error, handled: true, context: { ... })`.
+  `ErrorReporting` (`lib/error_reporting.rb`, required by its initializer because it is
+  needed at boot — it is ignored by the autoloader) logs every report and forwards it to
+  Sentry when `SENTRY_DSN` is set (`config/initializers/sentry.rb`). Context keys matching
+  `config.filter_parameters` are filtered; records and jobs are logged as `User#12` /
+  `SomeJob (job <id>)`. Keep e-mail addresses and tokens out of exception messages.

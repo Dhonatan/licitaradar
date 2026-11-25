@@ -2,7 +2,8 @@
 # SOLID_QUEUE_IN_PUMA=1). Schedules are cron lines in Brasília time.
 #
 # The sync runs every 6 hours, 30 minutes before the 07:00 digest's slot (00:30, 06:30,
-# 12:30, 18:30), so the morning e-mail is built from fresh data.
+# 12:30, 18:30), so the morning e-mail is built from fresh data. Old tenders are archived
+# on Sunday nights, between two syncs.
 default: &default
   sync_open_tenders:
     class: SyncOpenTendersJob
@@ -14,6 +15,11 @@ default: &default
     queue: default
     schedule: "0 7 * * * America/Sao_Paulo"
     description: "E-mail every user the new matches of their saved searches"
+  archive_old_tenders:
+    class: ArchiveOldTendersJob
+    queue: default
+    schedule: "15 3 * * 0 America/Sao_Paulo"
+    description: "Delete tenders closed long ago that nothing refers to (Sundays)"
 
 development:
   <<: *default

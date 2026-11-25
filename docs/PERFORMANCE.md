@@ -52,11 +52,12 @@ Known, accepted per-record queries:
 
 ## What to watch as the data grows
 
-- **Closed tenders are never deleted.** The PNCP has tens of thousands of open tenders at
-  any time; after months the table will be mostly closed ones (with their `raw` jsonb).
-  The `proposals_close_at` index keeps the open-tender queries fast, but table size,
-  backups and `VACUUM` grow. A purge or archive task for tenders closed for more than N
-  months is in the backlog.
+- **Closed tenders are archived.** `ArchiveOldTendersJob` (Sundays 03:15) deletes, in
+  batches of 1,000, tenders closed more than `ARCHIVE_AFTER_DAYS` (default 180) days ago
+  that no notification refers to (`Tenders::Archive`). The `expired` query uses the
+  `proposals_close_at` index; the "not referenced" check is a hashed subplan over
+  `notifications.tender_id`. Notified tenders stay forever (they are few: at most 20 per
+  saved search per day); revisit that if `notifications` grows large.
 - If sorting by value gets slow (hundreds of thousands of open rows), add a partial index
   `ON tenders (estimated_value DESC NULLS LAST) WHERE status_id = 1`.
 - `COUNT(*)` of all open tenders (home page and results without filters) is a sequential

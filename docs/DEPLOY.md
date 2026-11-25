@@ -30,6 +30,7 @@ working image.
 | `JOB_CONCURRENCY` | no | Solid Queue worker processes (default 1). |
 | `ADMIN_EMAIL` | recommended | Receives an alert when the PNCP sync keeps failing (comma-separated list). |
 | `STATUS_USERNAME`, `STATUS_PASSWORD` | recommended | Enable the admin page `/status` (basic auth). Unset = page disabled. |
+| `ARCHIVE_AFTER_DAYS` | no | Tenders closed longer than this are deleted every Sunday unless a digest sent them (default `180`). |
 | `SENTRY_DSN` | recommended | Sends errors to [Sentry](https://sentry.io) (see "Error tracking" below). Unset = errors only go to the logs. |
 | `SENTRY_ENVIRONMENT` | no | Environment name shown in Sentry (default: `production`). |
 | `SENTRY_TRACES_SAMPLE_RATE` | no | Share of requests traced for performance, `0`–`1` (default `0`, off). |
@@ -227,5 +228,7 @@ Put an HTTPS reverse proxy (Caddy, nginx, Traefik) in front of it, or set
   Exception messages are sent as they are, so do not put e-mail addresses in them.
   Other services (Honeybadger, AppSignal…) can be plugged in the same way: a forwarder
   object passed to `ErrorReporting.new` in `config/initializers/error_reporting.rb`.
-- **Data growth:** closed tenders are kept (see [`docs/PERFORMANCE.md`](PERFORMANCE.md));
-  watch the database size.
+- **Data growth:** tenders closed more than `ARCHIVE_AFTER_DAYS` (180) days ago are
+  deleted every Sunday at 03:15 (Brasília) unless a digest sent them; the job logs
+  `Tender archive: N deleted, M kept`. Run it by hand with `bin/rails tenders:archive`. See
+  [`docs/PERFORMANCE.md`](PERFORMANCE.md).

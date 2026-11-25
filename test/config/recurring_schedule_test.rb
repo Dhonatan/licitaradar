@@ -17,12 +17,16 @@ class RecurringScheduleTest < ActiveSupport::TestCase
 
       assert task.valid?, "#{key}: #{task.errors.full_messages.to_sentence}"
     end
-    assert_equal %w[ send_daily_digests sync_open_tenders ], tasks.keys.sort
+    assert_equal %w[ archive_old_tenders send_daily_digests sync_open_tenders ], tasks.keys.sort
   end
 
   test "the sync runs every 6 hours and the digest daily at 07:00 Brasília time" do
     assert_equal [ "12:30", "18:30", "00:30", "06:30", "12:30" ], next_runs("sync_open_tenders", 5).map { |time| time.strftime("%H:%M") }
     assert_equal [ "2026-11-22 07:00", "2026-11-23 07:00" ], next_runs("send_daily_digests", 2).map { |time| time.strftime("%Y-%m-%d %H:%M") }
+  end
+
+  test "old tenders are archived weekly, on Sunday nights between two syncs" do
+    assert_equal [ "Sun 2026-11-22 03:15", "Sun 2026-11-29 03:15" ], next_runs("archive_old_tenders", 2).map { |time| time.strftime("%a %Y-%m-%d %H:%M") }
   end
 
   test "the Solid Queue tables accept jobs" do
