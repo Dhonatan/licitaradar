@@ -18,6 +18,7 @@ pt-BR:
         email_address: E-mail
         password: Senha
         password_confirmation: Confirmação da senha
+        unconfirmed_email: Novo e-mail
       saved_search:
         name: Nome
         query: Palavras-chave

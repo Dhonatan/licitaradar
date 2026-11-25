@@ -55,6 +55,105 @@ class UserTest < ActiveSupport::TestCase
     assert_nil User.find_by_password_reset_token(token)
   end
 
+  test "new accounts are unconfirmed" do
+    user = create_user(confirmed: false)
+
+    assert_not user.confirmed?
+    assert user.confirmation_pending?
+    assert_equal user.email_address, user.email_address_to_confirm
+    assert_not_includes User.confirmed, user
+  end
+
+  test "confirm_email confirms the account and is idempotent" do
+    user = create_user(confirmed: false)
+
+    freeze_time do
+      assert user.confirm_email
+      assert_equal Time.current, user.reload.confirmed_at
+    end
+    assert_not user.confirmation_pending?
+    assert_includes User.confirmed, user
+
+    assert_no_changes -> { user.reload.confirmed_at } do
+      assert user.confirm_email
+    end
+  end
+
+  test "the confirmation token finds the user and expires in 3 days" do
+    user = create_user(confirmed: false)
+    token = user.generate_token_for(:email_confirmation)
+
+    assert_equal user, User.find_by_token_for(:email_confirmation, token)
+
+    travel 3.days + 1.minute do
+      assert_nil User.find_by_token_for(:email_confirmation, token)
+    end
+    assert_nil User.find_by_token_for(:email_confirmation, "token-invalido")
+  end
+
+  test "changing the e-mail keeps the current address until the new one is confirmed" do
+    user = create_user(email_address: "ana@example.com")
+
+    user.change_email_to(" Ana.Nova@Example.com ")
+    assert user.save
+
+    assert_equal "ana@example.com", user.reload.email_address
+    assert_equal "ana.nova@example.com", user.unconfirmed_email
+    assert user.confirmed?
+    assert user.confirmation_pending?
+    assert_equal "ana.nova@example.com", user.email_address_to_confirm
+
+    assert user.confirm_email
+    user.reload
+    assert_equal "ana.nova@example.com", user.email_address
+    assert_nil user.unconfirmed_email
+    assert_not user.confirmation_pending?
+  end
+
+  test "asking for the current address again cancels a pending change" do
+    user = create_user(email_address: "ana@example.com")
+    user.update!(unconfirmed_email: "ana.nova@example.com")
+
+    user.change_email_to("ANA@example.com")
+
+    assert_nil user.unconfirmed_email
+  end
+
+  test "the new address must be valid and not belong to another account" do
+    create_user(email_address: "bia@example.com")
+    user = create_user(email_address: "ana@example.com")
+
+    user.change_email_to("bia@example.com")
+    assert_not user.valid?
+    assert_includes user.errors[:unconfirmed_email], "já está em uso"
+
+    user.change_email_to("ana-sem-arroba")
+    assert_not user.valid?
+    assert_includes user.errors[:unconfirmed_email], "não é válido"
+  end
+
+  test "a confirmation token stops working when the pending address changes or is confirmed" do
+    user = create_user(email_address: "ana@example.com")
+    user.update!(unconfirmed_email: "ana.nova@example.com")
+    first_token = user.generate_token_for(:email_confirmation)
+
+    user.update!(unconfirmed_email: "ana.outra@example.com")
+    assert_nil User.find_by_token_for(:email_confirmation, first_token)
+
+    second_token = user.generate_token_for(:email_confirmation)
+    user.confirm_email
+    assert_nil User.find_by_token_for(:email_confirmation, second_token)
+  end
+
+  test "confirm_email fails when the new address was taken in the meantime" do
+    user = create_user(email_address: "ana@example.com")
+    user.update!(unconfirmed_email: "ana.nova@example.com")
+    create_user(email_address: "ana.nova@example.com")
+
+    assert_not user.confirm_email
+    assert_equal "ana@example.com", user.reload.email_address
+  end
+
   test "destroying a user removes its sessions" do
     user = create_user
     user.sessions.create!

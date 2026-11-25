@@ -3,9 +3,11 @@
 module RecordsTestHelper
   DEFAULT_PASSWORD = "senha-secreta-123".freeze
 
-  def create_user(email_address: nil, password: DEFAULT_PASSWORD)
+  # Users are confirmed unless `confirmed: false` (only confirmed accounts get alerts).
+  def create_user(email_address: nil, password: DEFAULT_PASSWORD, confirmed: true)
     @user_sequence = @user_sequence.to_i + 1
-    User.create!(email_address: email_address || "pessoa#{@user_sequence}@example.com", password: password)
+    User.create!(email_address: email_address || "pessoa#{@user_sequence}@example.com", password: password,
+                 confirmed_at: (Time.current if confirmed))
   end
 
   # Named differently from the create_tender helpers some older tests define locally.
