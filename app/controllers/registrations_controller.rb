@@ -13,8 +13,10 @@ class RegistrationsController < ApplicationController
     @user = User.new(registration_params)
 
     if @user.save
+      EmailConfirmationsMailer.confirm(@user).deliver_later
       start_new_session_for @user
-      redirect_to after_authentication_url, notice: "Conta criada! Agora você pode salvar buscas e receber alertas."
+      redirect_to after_authentication_url,
+                  notice: "Conta criada! Enviamos um link para #{@user.email_address}: confirme o e-mail para receber os alertas."
     else
       render :new, status: :unprocessable_content
     end

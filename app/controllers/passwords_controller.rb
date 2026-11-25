@@ -25,6 +25,8 @@ class PasswordsController < ApplicationController
 
     # has_secure_password ignores a blank password on update, so check it here.
     if password_params[:password].present? && @user.update(password_params)
+      # The reset link reached the account's address, which proves the user owns it.
+      @user.update!(confirmed_at: Time.current) unless @user.confirmed?
       @user.sessions.destroy_all
       redirect_to new_session_path, notice: "Senha alterada. Entre com a nova senha."
     else

@@ -1,0 +1,10 @@
+Olá,
+
+<% if @email_change -%>
+Recebemos um pedido para trocar o e-mail da sua conta no LicitaRadar para este endereço. Confirme para concluir a troca:
+<% else -%>
+Falta pouco para você receber os alertas de licitações do LicitaRadar. Confirme o seu e-mail neste link:
+<% end -%>
+<%= @confirmation_url %>
+
+O link vale por <%= @expires_in_days %> dias. Se você não fez esse pedido, ignore este e-mail: nada será enviado para este endereço.

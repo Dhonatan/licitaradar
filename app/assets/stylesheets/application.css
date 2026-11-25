@@ -128,6 +128,12 @@ input[type="search"], input[type="text"], select {
 .flash { border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 1.25rem; font-weight: 600; }
 .flash--notice { background: #e6f4f1; color: var(--accent); }
 .flash--alert { background: #fde8e8; color: #a61b1b; }
+.notice-banner {
+  background: #fff4de; color: #6b4600; border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 1.25rem;
+  display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+}
+.notice-banner p { margin: 0; }
+.notice-banner .link-button { color: #6b4600; text-decoration: underline; }
 
 /* Accounts */
 .site-nav { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
@@ -170,6 +176,8 @@ input[type="email"], input[type="password"], input[type="number"] {
 .field--options label { font-weight: 400; display: flex; gap: 0.4rem; align-items: center; }
 .field_with_errors { display: contents; }
 .unsubscribe { max-width: 640px; margin: 0 auto; }
+.account { max-width: 640px; margin: 0 auto; display: grid; gap: 1.25rem; }
+.account .card p { color: inherit; }
 
 /* API tokens */
 .new-token { background: #e6f4f1; border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }

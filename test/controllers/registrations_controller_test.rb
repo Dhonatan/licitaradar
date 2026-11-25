@@ -1,6 +1,8 @@
 require "test_helper"
 
 class RegistrationsControllerTest < ActionDispatch::IntegrationTest
+  include ActionMailer::TestHelper
+
   def valid_params(**overrides)
     { user: { email_address: "nova@example.com", password: "senha-secreta", password_confirmation: "senha-secreta" }.merge(overrides) }
   end
@@ -45,6 +47,20 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_select ".flash--notice", /Conta criada/
     assert_select "nav button", "Sair"
+  end
+
+  test "create sends the confirmation e-mail and the account starts unconfirmed" do
+    assert_enqueued_emails 1 do
+      post registration_path, params: valid_params
+    end
+
+    user = User.last
+    assert_not user.confirmed?
+    assert_enqueued_email_with EmailConfirmationsMailer, :confirm, args: [ user ]
+    assert_match "confirme o e-mail para receber os alertas", flash[:notice]
+
+    follow_redirect!
+    assert_select "#email-confirmation-banner", /nova@example.com/
   end
 
   test "create shows errors in Portuguese and keeps the e-mail" do

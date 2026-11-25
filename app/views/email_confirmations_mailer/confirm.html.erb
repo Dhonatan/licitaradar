@@ -1,0 +1,11 @@
+<p>Olá,</p>
+
+<% if @email_change %>
+  <p>Recebemos um pedido para trocar o e-mail da sua conta no LicitaRadar para este endereço. Confirme para concluir a troca:</p>
+<% else %>
+  <p>Falta pouco para você receber os alertas de licitações do LicitaRadar. Confirme o seu e-mail:</p>
+<% end %>
+
+<p><%= link_to "Confirmar e-mail", @confirmation_url %></p>
+
+<p>O link vale por <%= @expires_in_days %> dias. Se você não fez esse pedido, ignore este e-mail: nada será enviado para este endereço.</p>

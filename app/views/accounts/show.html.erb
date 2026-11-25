@@ -1,0 +1,51 @@
+<% content_for :title, "Minha conta — LicitaRadar" %>
+
+<div class="account">
+  <h1 class="page-title">Minha conta</h1>
+
+  <section class="card" id="account-email">
+    <h2>E-mail</h2>
+    <p>
+      <strong><%= @user.email_address_in_database %></strong>
+      <% if @user.confirmed? %>
+        <span class="badge badge--ok">confirmado</span>
+      <% else %>
+        <span class="badge badge--soon">não confirmado</span>
+      <% end %>
+    </p>
+
+    <% if (pending_email = @user.unconfirmed_email_in_database).present? %>
+      <p id="pending-email-change">
+        Troca pendente para <strong><%= pending_email %></strong>: abra o link que enviamos para esse endereço.
+        Até lá, o login e os alertas continuam no e-mail atual.
+      </p>
+      <%= button_to "Reenviar link de confirmação", email_confirmations_path, class: "link-button", form_class: "inline-form" %>
+    <% elsif !@user.confirmed? %>
+      <p class="muted">Os alertas das suas buscas só são enviados depois que você confirmar o e-mail.</p>
+    <% end %>
+  </section>
+
+  <section class="card" id="change-email">
+    <h2>Trocar e-mail</h2>
+    <p class="muted">Enviaremos um link de confirmação para o novo endereço. Para cancelar uma troca pendente, informe o e-mail atual.</p>
+
+    <%= render "shared/form_errors", record: @user %>
+
+    <%= form_with url: account_path, method: :patch, class: "stacked-form" do |form| %>
+      <div class="field">
+        <%= form.label :new_email_address, "Novo e-mail" %>
+        <%= form.email_field :new_email_address, value: @new_email_address, required: true, autocomplete: "email",
+                                                 placeholder: "voce@empresa.com.br", maxlength: User::MAX_EMAIL_LENGTH %>
+      </div>
+
+      <div class="field">
+        <%= form.label :current_password, "Senha atual" %>
+        <%= form.password_field :current_password, required: true, autocomplete: "current-password", maxlength: 72 %>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit "Trocar e-mail", class: "button" %>
+      </div>
+    <% end %>
+  </section>
+</div>

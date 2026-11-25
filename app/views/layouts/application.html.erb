@@ -18,6 +18,7 @@
         <% if authenticated? %>
           <%= link_to "Minhas buscas", saved_searches_path %>
           <%= link_to "API", api_tokens_path %>
+          <%= link_to "Minha conta", account_path %>
           <%= button_to "Sair", session_path, method: :delete, class: "link-button", form_class: "inline-form" %>
         <% else %>
           <%= link_to "Entrar", new_session_path %>
@@ -28,6 +29,7 @@
 
     <main class="container">
       <%= render "shared/flash" %>
+      <%= render "shared/email_confirmation_banner" %>
       <%= yield %>
     </main>
 

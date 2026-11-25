@@ -65,6 +65,14 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert User.authenticate_by(email_address: "ana@example.com", password: "senha-nova-123")
   end
 
+  test "update confirms an unconfirmed address, since the reset link reached it" do
+    @user.update!(confirmed_at: nil)
+
+    put password_path(@user.password_reset_token), params: { password: "senha-nova-123", password_confirmation: "senha-nova-123" }
+
+    assert @user.reload.confirmed?
+  end
+
   test "update keeps the token usable when the confirmation does not match" do
     token = @user.password_reset_token
 

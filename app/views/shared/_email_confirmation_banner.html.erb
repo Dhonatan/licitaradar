@@ -1,0 +1,9 @@
+<% if authenticated? && !Current.user.confirmed? %>
+  <div class="notice-banner" id="email-confirmation-banner" role="status">
+    <p>
+      Confirme o seu e-mail (<strong><%= Current.user.email_address_to_confirm %></strong>) para receber os alertas das suas buscas.
+      O link de confirmação vale por <%= (User::CONFIRMATION_EXPIRES_IN / 1.day).round %> dias.
+    </p>
+    <%= button_to "Reenviar e-mail de confirmação", email_confirmations_path, class: "link-button", form_class: "inline-form" %>
+  </div>
+<% end %>

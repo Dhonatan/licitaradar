@@ -1,0 +1,20 @@
+<% content_for :title, "Reenviar confirmação de e-mail — LicitaRadar" %>
+
+<section class="auth-card">
+  <h1 class="page-title">Reenviar confirmação</h1>
+  <p class="muted">Informe o e-mail da sua conta e enviaremos um novo link para confirmá-lo.</p>
+
+  <%= form_with url: email_confirmations_path, class: "stacked-form" do |form| %>
+    <div class="field">
+      <%= form.label :email_address, "E-mail" %>
+      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username",
+                                           placeholder: "voce@empresa.com.br", maxlength: User::MAX_EMAIL_LENGTH %>
+    </div>
+
+    <div class="form-actions">
+      <%= form.submit "Enviar link", class: "button" %>
+    </div>
+  <% end %>
+
+  <p class="auth-links"><%= link_to "Voltar para o login", new_session_path %></p>
+</section>
