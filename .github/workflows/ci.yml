@@ -114,6 +114,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The image installs gems in frozen mode, which fails when a gem was just added to the
+      # Gemfile and the Rails job has not committed the new Gemfile.lock yet.
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+      - name: Refresh Gemfile.lock
+        run: bundle lock
       - name: Build the production image
         run: docker build --tag licitaradar:ci .
       - name: Boot it against PostgreSQL and request a few pages
