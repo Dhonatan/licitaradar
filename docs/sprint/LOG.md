@@ -573,3 +573,117 @@ One entry per working session, newest at the bottom.
   Day 7's documents/items tables should cascade on tender deletion.
 - Still open from sprint 1: first deploy (#7), shared cache for rate limits (#5).
 - Nothing moved to Day 7.
+
+## Day 7 — Thu, Nov 26 · Tender documents + items ✅
+
+**Done**
+- **PNCP integration client (`lib/pncp`):** `Pncp::IntegrationClient` (base
+  `https://pncp.gov.br/api/pncp`, env `PNCP_INTEGRATION_BASE_URL`) for
+  `GET /v1/orgaos/{cnpj}/compras/{ano}/{sequencial}/arquivos` and `.../itens`
+  (`pagina`/`tamanhoPagina`, read until a short, empty or repeated page; 50 per page, at
+  most 40 pages). Paths and fields checked against the official "Manual de Integração do
+  PNCP" (sections 11.8 and 11.13, access in section 5: public GETs, no authentication).
+  `DocumentNormalizer` (sequence, title, type id/name, download URL, published at, active)
+  and `ItemNormalizer` (number, description, M/S, quantity, unit, unit/total estimated
+  value, confidential budget, status, judgment criterion, benefit, category, updated at).
+  Shared code extracted first: `Pncp::HttpClient` (transport, retries, 204, JSON) and
+  `Pncp::Values` (string/integer/decimal/boolean/Brasília time parsing). Fictional fixtures
+  `arquivos.json`, `itens_page_1.json`, `itens_page_2.json`. Lib: 58 runs (38 before).
+- **Models + fetch:** `tender_documents` and `tender_items` (unique per tender +
+  sequence/number, FK `ON DELETE CASCADE`, so `Tenders::Archive` removes them with the
+  tender); `tenders.details_fetched_at`, `details_source_updated_at`,
+  `details_requested_at`. `Tenders::FetchDetails` replaces the rows (upsert + delete the
+  ones gone from the PNCP), skips unidentifiable records, drops inactive documents and
+  stores the PNCP version it fetched. `FetchTenderDetailsJob` retries `Pncp::Error` (3
+  attempts, 2 min apart, last failure reported), reports 4xx without retrying, is
+  discarded if the tender was archived. `Tender#request_details_fetch` enqueues it when the
+  details are missing or `source_updated_at` changed, at most once per 10 minutes (atomic
+  conditional UPDATE).
+- **Tender page:** lazy Turbo Frame `tender_details` → `GET /tenders/:id/details`.
+  Opening it requests the fetch; while nothing was fetched it shows "Buscando documentos e
+  itens no PNCP…" and a small Stimulus controller (`frame-reload`) reloads it every 3 s, up
+  to 20 times, then shows a "try again later / see the PNCP" message. "Documentos do
+  edital" (type, title linked to the PNCP download — only http(s) — and date) and "Itens"
+  (number, description, kind/benefit, quantity, unit, unit and total estimated values with
+  up to 4 decimals, "sigiloso" when missing; first 100 items + link to the PNCP for larger
+  tenders). Stale details stay visible while the refresh runs.
+- **Search:** `tenders.items_text` (item descriptions, max 50,000 chars) and the generated
+  `searchable` column rebuilt as `setweight(tender text, 'A') || setweight(items_text, 'D')`
+  — same GIN index, so keyword, niche and saved-search queries match items, ranked below
+  object matches. Query-plan test for an item-only word.
+- **API v1:** `GET /api/v1/tenders/:id` returns `details` (`status`: available,
+  refreshing, pending, unavailable; `fetched_at`), `documents` and `items` (null until the
+  first fetch) and starts the fetch like the page. The list endpoint is unchanged.
+  `docs/API.md` updated.
+- Docs: DEVELOPMENT.md ("Tender documents and items", search notes), README (feature,
+  layout), `.env.example`.
+- Rails suite: 406 runs, 1845 assertions, 0 failures (349 on day 6); lib: 58 runs.
+
+**Commits**
+- `b070729` refactor(pncp): share HTTP retries and value parsing between clients and normalizers
+- `a4a8f56` feat(pncp): fetch tender documents and items from the PNCP integration API
+- `642d37d` feat: store tender documents and items, fetched by a background job
+- `d1972a6` test: clear sent e-mails before every test
+- `84e7d1c` feat: show the tender documents and items on the tender page
+- `6f46f99` test: rename the tender details frame test to avoid a class name clash
+- `42f0674` feat: search tender items as well
+- `be06755` feat(api): include documents and items in GET /api/v1/tenders/:id
+- `93db7d7` docs: document tender documents and items (development guide, README, env example)
+- plus this docs commit; the bot regenerated `db/schema.rb` (`0750b2d`, `c613474`)
+
+**CI**
+- Two red runs, both fixed within minutes:
+  - `642d37d`: `SendDailyDigestsJobTest` saw 3 e-mails instead of 2 — a mail sent to the
+    same address by an earlier test in the same worker was still in
+    `ActionMailer::Base.deliveries` (only `ActionMailer::TestCase` clears it; the new tests
+    changed how files are spread over workers). Pre-existing flakiness; fixed for every
+    test in `d1972a6` (`setup { ActionMailer::Base.deliveries.clear }` in `test_helper.rb`).
+  - `84e7d1c`: the suite did not boot — two test classes named `TenderDetailsTest` (model
+    and controller). Renamed the controller one in `6f46f99`.
+- Every later run green (lib, RuboCop, Brakeman, Rails tests, Docker smoke test).
+
+**Decisions**
+- A separate `IntegrationClient` (subclass of a shared `HttpClient`) instead of a second
+  base URL inside `Client`: the two APIs have different paths, paging and payloads.
+- Response shape: the manual lists the fields under "documentos"/"itens" without a JSON
+  example; the API is known to answer a bare array. The client accepts a bare array, an
+  object with that key, or `data`. No live call was possible here (pncp.gov.br blocked),
+  so this is the first thing to check against the real API (see below).
+- The items endpoint returns no totals, so paging stops at the first short page, an empty
+  page (204) or a page that only repeats item numbers (in case the API ignores the paging
+  parameters). Page size 50 because the manual documents no maximum.
+- Details are fetched **on demand** (page frame or API), never by the 6-hourly sync: one
+  tender = 2+ requests, and fetching all open tenders every sync would multiply the load
+  on the PNCP. Crawlers that do not load frames trigger nothing. The tender page never
+  waits for the PNCP.
+- Refetch rule: the stored `details_source_updated_at` is the tender's `source_updated_at`
+  at the start of the fetch; a later sync that changes it makes the details stale again.
+  Requests are throttled to one job per tender per 10 minutes, so a failing fetch is
+  retried by the next visit after that.
+- Polling instead of Turbo Stream broadcasts: no Action Cable is configured, and a 3 s
+  reload for at most a minute is cheap. The server decides when to stop (the `poll` param).
+- Documents inactive on the PNCP (`statusAtivo: false`) are not stored. Item values of 0
+  with `orcamentoSigiloso: true` are stored as NULL and shown as "sigiloso".
+- Items in `searchable` get weight D and tender text weight A, so a match in the object
+  ranks above a match only in the items. Ranking among tenders without items is
+  unchanged (all their words moved from D to A together).
+- The page shows the first 100 items (with the total and a PNCP link); the API returns all
+  stored items (at most 2,000 per tender because of the client's page cap).
+- `tender_documents` / `tender_items` cascade on tender deletion (they only describe the
+  tender), so they are not in `Tenders::Archive::KEPT_WHEN_REFERENCED_BY`.
+
+**Open problems / notes**
+- **Not verified against the real PNCP** (no network here): endpoint shapes, the document
+  `url` format and whether `tamanhoPagina` has a maximum. After deploy (#7), open a few
+  tender pages and check the log lines `[Tenders::FetchDetails] tender N: X documents, Y
+  items`; reported `Pncp::HttpError`s would mean a path or parameter problem.
+- Item search only covers tenders whose details were fetched (someone opened the page or
+  asked the API). A background prefetch for open tenders (rate limited) would make it
+  complete — candidate for the backlog. A tender that starts matching a saved search only
+  because its items were fetched is not alerted unless it is also new/updated on the PNCP
+  (the matcher looks at publication/update/first-sync times).
+- Rebuilding `searchable` rewrites the `tenders` table once when this migration runs
+  (seconds at the current size).
+- In development, opening a seeded (fictional) tender enqueues a fetch that will 404 on
+  the real PNCP and be reported; harmless.
+- Nothing moved to Day 8. Day 8 must add `Watch` to `Tenders::Archive::KEPT_WHEN_REFERENCED_BY`.

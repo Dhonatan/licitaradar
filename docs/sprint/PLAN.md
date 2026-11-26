@@ -140,23 +140,23 @@ Consultas", e.g. via web search) before writing fixtures, and keep fixtures fict
 - [x] Cache the home page counters for 5 minutes (`docs/PERFORMANCE.md` note) with a test.
 - [x] Close issues #2, #4, #6 in commit messages (`Closes #N`) when done.
 
-## Day 7 — Thu, Nov 26 · Tender documents + items (long)
+## Day 7 — Thu, Nov 26 · Tender documents + items (long) ✅
 
-- [ ] `lib/pncp`: `Pncp::IntegrationClient` (or extend `Client` with a second base URL)
+- [x] `lib/pncp`: `Pncp::IntegrationClient` (or extend `Client` with a second base URL)
       for `GET /v1/orgaos/{cnpj}/compras/{ano}/{sequencial}/arquivos` (documents) and
       `.../itens` (items, paginated). Normalizers `DocumentNormalizer` and
       `ItemNormalizer` (title, type, URL, published at; item number, description,
       quantity, unit, unit/total estimated value). Lib tests with fictional fixtures.
-- [ ] Models `TenderDocument` and `TenderItem` (belongs_to tender, unique per sequence),
+- [x] Models `TenderDocument` and `TenderItem` (belongs_to tender, unique per sequence),
       `Tenders::FetchDetails` service + `FetchTenderDetailsJob`: fetched lazily the first
       time a tender page is opened and refreshed when the tender's `source_updated_at`
       changes; never blocks the page (Turbo Frame with a loading state).
-- [ ] Tender page: "Documentos do edital" list (type, title, link to PNCP) and "Itens"
+- [x] Tender page: "Documentos do edital" list (type, title, link to PNCP) and "Itens"
       table (quantity, unit, estimated values; "sigiloso" when missing).
-- [ ] Include item descriptions in search: add an `items_text` column to tenders (filled
+- [x] Include item descriptions in search: add an `items_text` column to tenders (filled
       after fetching items) and extend the generated `searchable` column — or a second
       tsvector — so searches also match items. Migration + tests that the index is used.
-- [ ] API v1: include `documents` and `items` in `GET /api/v1/tenders/:id`; update
+- [x] API v1: include `documents` and `items` in `GET /api/v1/tenders/:id`; update
       `docs/API.md`.
 
 ## Day 8 — Fri, Nov 27 · Watchlist, reminders, notes, exports
