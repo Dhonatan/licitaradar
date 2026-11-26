@@ -1,0 +1,20 @@
+<%= turbo_frame_tag "tender_details", class: "tender-details-frame" do %>
+  <% if @tender.details_fetched? %>
+    <%= render "tenders/documents", documents: @documents, tender: @tender %>
+    <%= render "tenders/items", items: @items, items_count: @items_count, tender: @tender %>
+    <p class="muted small">Documentos e itens conforme o PNCP em <%= date_time_br(@tender.details_fetched_at) %>.</p>
+  <% elsif !@tender.details_fetchable? %>
+    <p class="muted">Os documentos e itens desta licitação não estão disponíveis aqui. Consulte o edital no PNCP.</p>
+  <% elsif @poll < TendersController::MAX_DETAILS_POLLS %>
+    <p class="details-loading" role="status"
+       data-controller="frame-reload"
+       data-frame-reload-url-value="<%= details_tender_path(@tender, poll: @poll + 1) %>">
+      Buscando documentos e itens no PNCP…
+    </p>
+  <% else %>
+    <p class="muted">
+      Ainda não conseguimos carregar os documentos e itens do PNCP. Recarregue a página em alguns minutos
+      ou consulte o edital direto no PNCP.
+    </p>
+  <% end %>
+<% end %>

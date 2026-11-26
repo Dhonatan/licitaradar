@@ -86,4 +86,17 @@ class TendersHelperTest < ActionView::TestCase
     assert_equal "123", format_cnpj("123")
     assert_nil format_cnpj(nil)
   end
+
+  test "item_value keeps up to four decimals and marks confidential values" do
+    assert_equal "R$ 27,90", item_value(BigDecimal("27.9"))
+    assert_equal "R$ 0,0125", item_value(BigDecimal("0.0125"))
+    assert_equal "R$ 1.886,875", item_value(BigDecimal("1886.875"))
+    assert_match ">sigiloso<", item_value(nil)
+  end
+
+  test "item_quantity drops insignificant zeros" do
+    assert_equal "1.500,5", item_quantity(BigDecimal("1500.5000"))
+    assert_equal "12", item_quantity(BigDecimal("12"))
+    assert_nil item_quantity(nil)
+  end
 end

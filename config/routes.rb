@@ -11,7 +11,10 @@ Rails.application.routes.draw do
   resources :email_confirmations, param: :token, only: %i[ new create show ]
   resource :account, only: %i[ show update ]
 
-  resources :tenders, only: %i[ index show ]
+  resources :tenders, only: %i[ index show ] do
+    # Documents and items, loaded into the tender page by a lazy Turbo Frame.
+    get :details, on: :member
+  end
   resources :saved_searches, except: :show
   resources :api_tokens, only: %i[ index create destroy ]
 

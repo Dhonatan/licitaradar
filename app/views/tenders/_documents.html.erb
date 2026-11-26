@@ -1,0 +1,22 @@
+<section class="tender-documents" aria-labelledby="tender-documents-title">
+  <h2 id="tender-documents-title">Documentos do edital</h2>
+  <% if documents.any? %>
+    <ul class="document-list">
+      <% documents.each do |document| %>
+        <li id="<%= dom_id(document) %>">
+          <span class="document-list__type"><%= document.type_name.presence || "Documento" %></span>
+          <% if (url = external_url(document.url)) %>
+            <%= link_to document.title, url, target: "_blank", rel: "noopener noreferrer", class: "document-list__title" %>
+          <% else %>
+            <span class="document-list__title"><%= document.title %></span>
+          <% end %>
+          <% if document.published_at %>
+            <span class="muted small">publicado em <%= date_br(document.published_at) %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="muted">Nenhum documento publicado no PNCP até agora.</p>
+  <% end %>
+</section>

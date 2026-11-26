@@ -1,0 +1,44 @@
+<section class="tender-items" aria-labelledby="tender-items-title">
+  <h2 id="tender-items-title">Itens <% if items_count.positive? %><span class="muted">(<%= items_count %>)</span><% end %></h2>
+  <% if items.any? %>
+    <table class="data-table items-table">
+      <thead>
+        <tr>
+          <th scope="col">Nº</th>
+          <th scope="col">Descrição</th>
+          <th scope="col" class="numeric">Quantidade</th>
+          <th scope="col">Unidade</th>
+          <th scope="col" class="numeric">Valor unitário estimado</th>
+          <th scope="col" class="numeric">Valor total estimado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% items.each do |item| %>
+          <tr id="<%= dom_id(item) %>">
+            <td><%= item.number %></td>
+            <td>
+              <%= item.description.presence || "Sem descrição" %>
+              <% if (notes = [ item.kind_name, item.benefit_name ].compact_blank).any? %>
+                <br><span class="muted small"><%= notes.join(" · ") %></span>
+              <% end %>
+            </td>
+            <td class="numeric"><%= item_quantity(item.quantity) %></td>
+            <td><%= item.unit %></td>
+            <td class="numeric"><%= item_value(item.unit_estimated_value) %></td>
+            <td class="numeric"><%= item_value(item.total_estimated_value) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <% if items_count > items.size %>
+      <p class="muted small">
+        Mostrando os primeiros <%= items.size %> de <%= items_count %> itens.
+        <% if (pncp_url = external_url(tender.pncp_url)) %>
+          <%= link_to "Ver todos no PNCP", pncp_url, target: "_blank", rel: "noopener noreferrer" %>.
+        <% end %>
+      </p>
+    <% end %>
+  <% else %>
+    <p class="muted">Nenhum item publicado no PNCP até agora.</p>
+  <% end %>
+</section>

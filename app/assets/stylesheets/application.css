@@ -120,6 +120,16 @@ input[type="search"], input[type="text"], select {
 .details dt { color: var(--muted); font-size: 0.8125rem; }
 .details dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 
+/* Documents and items (lazy Turbo Frame on the detail page) */
+.tender-details-frame { display: block; margin: 0 0 1.5rem; }
+.details-loading { color: var(--muted); padding: 1rem 1.25rem; border: 1px dashed var(--line); border-radius: var(--radius); }
+.document-list { list-style: none; padding: 0; margin: 0 0 1.5rem; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+.document-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--line); }
+.document-list li:last-child { border-bottom: 0; }
+.document-list__type { color: var(--muted); font-size: 0.8125rem; font-weight: 600; min-width: 9rem; }
+.document-list__title { font-weight: 600; overflow-wrap: anywhere; }
+.items-table .numeric { text-align: right; white-space: nowrap; }
+
 @media (max-width: 600px) {
   .search-row { flex-direction: column; }
 }

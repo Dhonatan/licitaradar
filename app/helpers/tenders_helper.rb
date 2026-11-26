@@ -16,6 +16,21 @@ module TendersHelper
     end
   end
 
+  # Item values keep up to 4 decimal places (unit prices like R$ 0,0125).
+  def item_value(amount)
+    if amount.nil?
+      tag.span("sigiloso", class: "muted", title: "O órgão não divulgou o valor estimado deste item (orçamento sigiloso).")
+    else
+      return brl(amount) if amount.round(2) == amount
+
+      number_to_currency(amount, unit: "R$", separator: ",", delimiter: ".", format: "%u %n", precision: 4, strip_insignificant_zeros: true)
+    end
+  end
+
+  def item_quantity(quantity)
+    number_with_precision(quantity, precision: 4, strip_insignificant_zeros: true, separator: ",", delimiter: ".")
+  end
+
   def date_time_br(time)
     time&.strftime("%d/%m/%Y às %H:%M")
   end

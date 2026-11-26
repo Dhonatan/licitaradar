@@ -67,6 +67,10 @@
     <% end %>
   </dl>
 
+  <%= turbo_frame_tag "tender_details", src: details_tender_path(@tender), loading: :lazy, class: "tender-details-frame" do %>
+    <p class="details-loading" role="status">Carregando documentos e itens do edital…</p>
+  <% end %>
+
   <% if @tender.additional_info.present? %>
     <section>
       <h2>Informações complementares</h2>
