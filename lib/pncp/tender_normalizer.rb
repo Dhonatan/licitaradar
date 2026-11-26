@@ -1,12 +1,10 @@
-require "bigdecimal"
-require "time"
-
 module Pncp
   # Turns one raw record from the PNCP API (Portuguese field names, Brasília
   # local times, nested agency/unit objects) into a flat hash of attributes
   # that maps 1:1 to the `tenders` table.
   class TenderNormalizer
-    BRASILIA_OFFSET = "-03:00".freeze
+    include Values
+
     PUBLIC_URL = "https://pncp.gov.br/app/editais/%<cnpj>s/%<year>s/%<sequence>s".freeze
 
     def self.call(record)
@@ -62,47 +60,6 @@ module Pncp
     end
 
     private
-      def string(value)
-        return nil if value.nil?
-
-        text = value.to_s.strip
-        text.empty? ? nil : text
-      end
-
-      def digits(value)
-        string(value)&.delete("^0-9")
-      end
-
-      def integer(value)
-        return value if value.is_a?(Integer)
-        return nil if string(value).nil?
-
-        Integer(string(value), 10, exception: false)
-      end
-
-      def decimal(value)
-        text = string(value)
-        return nil unless text
-
-        BigDecimal(text)
-      rescue ArgumentError
-        nil
-      end
-
-      # PNCP sends Brasília local times without an offset ("2026-11-20T09:00:00"),
-      # sometimes without seconds, and some fields as plain dates ("2026-11-20").
-      def time(value)
-        text = string(value)
-        return nil unless text&.match?(/\A\d{4}-\d{2}-\d{2}/)
-
-        text = "#{text}T00:00:00" if text.match?(/\A\d{4}-\d{2}-\d{2}\z/)
-        text = "#{text}:00" if text.match?(/T\d{2}:\d{2}\z/)
-        text = "#{text}#{BRASILIA_OFFSET}" unless text.match?(/(Z|[+-]\d{2}:?\d{2})\z/)
-        Time.iso8601(text).getlocal(BRASILIA_OFFSET)
-      rescue ArgumentError
-        nil
-      end
-
       def public_url(cnpj, year, sequence)
         return nil unless cnpj && year && sequence
 

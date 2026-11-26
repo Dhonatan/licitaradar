@@ -5,7 +5,7 @@ require "date"
 require "json"
 
 PNCP_LIB = File.expand_path("../lib/pncp", __dir__)
-%w[ error http_error invalid_record page modalities pii_scrubber net_http_transport tender_normalizer client ].each do |file|
+%w[ error http_error invalid_record page modalities pii_scrubber values net_http_transport http_client tender_normalizer client ].each do |file|
   require File.join(PNCP_LIB, file)
 end
 

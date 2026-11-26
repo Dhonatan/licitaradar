@@ -1,9 +1,4 @@
 require "date"
-require "json"
-require "openssl"
-require "socket"
-require "timeout"
-require "uri"
 
 module Pncp
   # Client for the public PNCP query API (https://pncp.gov.br/api/consulta).
@@ -20,22 +15,14 @@ module Pncp
   #   client.each_open_tender(modality_id: 6, until_date: Date.today + 60) do |record|
   #     Pncp::TenderNormalizer.call(record)
   #   end
-  class Client
+  class Client < HttpClient
     BASE_URL = "https://pncp.gov.br/api/consulta".freeze
     DEFAULT_PAGE_SIZE = 50
     MAX_PAGE_SIZE = 500
-    USER_AGENT = "LicitaRadar/0.1 (+https://github.com/Dhonatan/licitaradar)".freeze
 
-    NETWORK_ERRORS = [ Timeout::Error, SocketError, SystemCallError, IOError, OpenSSL::SSL::SSLError ].freeze
-
-    def initialize(base_url: ENV.fetch("PNCP_BASE_URL", BASE_URL), transport: NetHttpTransport.new,
-                   max_retries: 3, backoff: 2.0, sleeper: ->(seconds) { sleep(seconds) }, user_agent: USER_AGENT)
-      @base_url = base_url.to_s.chomp("/")
-      @transport = transport
-      @max_retries = max_retries
-      @backoff = backoff
-      @sleeper = sleeper
-      @user_agent = user_agent
+    # Same options as HttpClient (transport, max_retries, backoff, sleeper, user_agent).
+    def initialize(base_url: ENV.fetch("PNCP_BASE_URL", BASE_URL), **options)
+      super(base_url: base_url, **options)
     end
 
     # Tenders whose proposal period is still open (GET /v1/contratacoes/proposta).
@@ -94,50 +81,8 @@ module Pncp
 
     private
       def fetch_page(path, number, params)
-        uri = build_uri(path, params)
-        response = with_retries { request(uri) }
-        # Net::HTTP hands back a binary (ASCII-8BIT) body; the API always speaks UTF-8.
-        body = response.body.to_s.dup.force_encoding(Encoding::UTF_8)
-        return Page.empty(number) if response.status == 204 || body.strip.empty?
-
-        Page.from_payload(JSON.parse(body), number: number)
-      rescue JSON::ParserError => error
-        raise Error, "Invalid JSON from PNCP (#{uri}): #{error.message}"
-      end
-
-      def request(uri)
-        response = @transport.get(uri, "Accept" => "application/json", "User-Agent" => @user_agent)
-        raise HttpError.new(response.status, response.body) unless (200..299).cover?(response.status)
-
-        response
-      end
-
-      def with_retries
-        attempts = 0
-        begin
-          attempts += 1
-          yield
-        rescue HttpError => error
-          raise if !error.retryable? || attempts > @max_retries
-
-          pause(attempts)
-          retry
-        rescue *NETWORK_ERRORS => error
-          raise Error, "Network error talking to PNCP: #{error.class}: #{error.message}" if attempts > @max_retries
-
-          pause(attempts)
-          retry
-        end
-      end
-
-      def pause(attempt)
-        @sleeper.call(@backoff * (2**(attempt - 1)))
-      end
-
-      def build_uri(path, params)
-        URI("#{@base_url}#{path}").tap do |uri|
-          uri.query = URI.encode_www_form(params.compact)
-        end
+        payload = get_json(path, params)
+        payload ? Page.from_payload(payload, number: number) : Page.empty(number)
       end
 
       def format_date(value)
