@@ -1,7 +1,7 @@
 require "test_helper"
 
 # The "Documentos do edital" and "Itens" frame of the tender page (TendersController#details).
-class TenderDetailsTest < ActionDispatch::IntegrationTest
+class TenderDetailsFrameTest < ActionDispatch::IntegrationTest
   def store_details(tender, items: 3)
     tender.documents.create!(sequence: 1, title: "Edital do Pregão 45/2026", type_name: "Edital", published_at: Time.zone.parse("2026-11-10 09:15"),
                              url: "https://pncp.gov.br/pncp-api/v1/orgaos/00000000000191/compras/2026/12/arquivos/1")
