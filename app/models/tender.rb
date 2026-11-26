@@ -9,7 +9,12 @@ class Tender < ApplicationRecord
   ACCENTED = "áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ"
   UNACCENTED = "aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN"
 
+  # Documents and items are fetched on demand (Tenders::FetchDetails), not by the sync.
+  DETAILS_REQUEST_INTERVAL = 10.minutes
+
   has_many :notifications, dependent: :delete_all
+  has_many :documents, -> { ordered }, class_name: "TenderDocument", inverse_of: :tender, dependent: :delete_all
+  has_many :items, -> { ordered }, class_name: "TenderItem", inverse_of: :tender, dependent: :delete_all
 
   validates :pncp_control_number, presence: true, uniqueness: true
   validates :modality_id, inclusion: { in: Pncp::Modalities::ALL.keys }, allow_nil: true
@@ -38,6 +43,38 @@ class Tender < ApplicationRecord
 
   def open_for_proposals?
     status_id == PUBLISHED_STATUS_ID && proposals_close_at.present? && proposals_close_at.future?
+  end
+
+  # The integration API addresses a tender by agency CNPJ, year and sequence.
+  def details_fetchable?
+    agency_cnpj.to_s.delete("^0-9").length == 14 && year.present? && sequence.present?
+  end
+
+  def details_fetched?
+    details_fetched_at.present?
+  end
+
+  # Never fetched, or the tender changed on the PNCP since the last fetch.
+  def details_stale?
+    !details_fetched? || details_source_updated_at != source_updated_at
+  end
+
+  # Enqueues FetchTenderDetailsJob when the details are stale, at most once per
+  # DETAILS_REQUEST_INTERVAL (page views and frame reloads call this freely). The claim is
+  # a conditional UPDATE, so concurrent requests enqueue one job. Returns true if enqueued.
+  def request_details_fetch
+    return false unless details_fetchable? && details_stale?
+
+    now = Time.current
+    claimed = Tender.where(id: id)
+      .where("details_requested_at IS NULL OR details_requested_at <= ?", now - DETAILS_REQUEST_INTERVAL)
+      .update_all(details_requested_at: now)
+    return false unless claimed == 1
+
+    self.details_requested_at = now
+    clear_attribute_change(:details_requested_at)
+    FetchTenderDetailsJob.perform_later(self)
+    true
   end
 
   # PNCP publishes 0 when the estimate is confidential ("orçamento sigiloso").

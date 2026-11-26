@@ -5,7 +5,9 @@ module Tenders
   # from their last update.
   #
   # Tenders referenced elsewhere are kept, so links in old digests keep working: add every
-  # new table that points at tenders (watchlists, documents...) to KEPT_WHEN_REFERENCED_BY.
+  # new table that points at tenders (watchlists...) to KEPT_WHEN_REFERENCED_BY, unless its
+  # rows only describe the tender — tender_documents and tender_items are deleted with it
+  # by their foreign keys (ON DELETE CASCADE).
   #
   #   result = Tenders::Archive.new.call
   #   result.deleted_count  # rows removed

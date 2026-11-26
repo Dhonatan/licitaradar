@@ -9,6 +9,7 @@ module ActiveSupport
   class TestCase
     include RecordsTestHelper
     include EnvTestHelper
+    include PncpDetailsTestHelper
 
     # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors)
