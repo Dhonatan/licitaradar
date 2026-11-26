@@ -156,6 +156,67 @@ module Api
         assert_equal false, response.parsed_body.dig("data", "open_for_proposals")
       end
 
+      test "show includes the documents and items" do
+        tender = create_fetchable_tender
+        tender.documents.create!(sequence: 1, title: "Edital", type_id: 2, type_name: "Edital", published_at: Time.zone.parse("2026-11-10 09:15"),
+                                 url: "https://pncp.gov.br/pncp-api/v1/orgaos/00000000000191/compras/2026/12/arquivos/1")
+        tender.documents.create!(sequence: 2, title: "Anexo", url: "javascript:alert(1)")
+        tender.items.create!(number: 1, description: "Resma de papel A4", material_or_service: "M", quantity: 500, unit: "Pacote",
+                             unit_estimated_value: 27.9, total_estimated_value: 13_950, status_name: "Em Andamento",
+                             judgment_criterion_name: "Menor preço", benefit_name: "Sem benefício", category_name: "Bens móveis")
+        tender.items.create!(number: 2, description: "Manutenção", material_or_service: "S", quantity: 12, unit: "Mês", confidential_budget: true)
+        tender.update!(details_fetched_at: Time.zone.parse("2026-11-26 10:00"), details_source_updated_at: tender.source_updated_at)
+
+        assert_no_enqueued_jobs { get api_v1_tender_path(tender), headers: @headers }
+
+        data = response.parsed_body["data"]
+        assert_equal({ "status" => "available", "fetched_at" => "2026-11-26T10:00:00-03:00" }, data["details"])
+        assert_equal(
+          { "sequence" => 1, "title" => "Edital", "type" => { "id" => 2, "name" => "Edital" },
+            "url" => "https://pncp.gov.br/pncp-api/v1/orgaos/00000000000191/compras/2026/12/arquivos/1",
+            "published_at" => "2026-11-10T09:15:00-03:00" },
+          data["documents"].first
+        )
+        assert_nil data["documents"].second["url"]
+        assert_equal(
+          { "number" => 1, "description" => "Resma de papel A4", "kind" => "material", "quantity" => "500.0", "unit" => "Pacote",
+            "unit_estimated_value" => "27.9", "total_estimated_value" => "13950.0", "confidential_value" => false,
+            "status" => "Em Andamento", "judgment_criterion" => "Menor preço", "benefit" => "Sem benefício",
+            "category" => "Bens móveis", "source_updated_at" => nil },
+          data["items"].first
+        )
+        service = data["items"].second
+        assert_equal [ "service", nil, nil, true ], service.values_at("kind", "unit_estimated_value", "total_estimated_value", "confidential_value")
+      end
+
+      test "show starts the fetch when the details are missing or outdated" do
+        tender = create_fetchable_tender
+
+        assert_enqueued_with(job: FetchTenderDetailsJob, args: [ tender ]) { get api_v1_tender_path(tender), headers: @headers }
+
+        data = response.parsed_body["data"]
+        assert_equal "pending", data.dig("details", "status")
+        assert_nil data["documents"]
+        assert_nil data["items"]
+
+        tender.update!(details_fetched_at: 1.day.ago, details_source_updated_at: tender.source_updated_at - 1.day, details_requested_at: nil)
+        get api_v1_tender_path(tender), headers: @headers
+        assert_equal "refreshing", response.parsed_body.dig("data", "details", "status")
+        assert_equal [], response.parsed_body.dig("data", "items")
+
+        get api_v1_tender_path(create_open_tender), headers: @headers
+        assert_equal "unavailable", response.parsed_body.dig("data", "details", "status")
+      end
+
+      test "the list does not include documents or items" do
+        create_open_tender
+
+        get api_v1_tenders_path, headers: @headers
+
+        assert_not response.parsed_body["data"].first.key?("items")
+        assert_not response.parsed_body["data"].first.key?("details")
+      end
+
       test "show answers 404 as JSON for unknown tenders" do
         get api_v1_tender_path(0), headers: @headers
 

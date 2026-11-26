@@ -2,7 +2,8 @@ module Api
   module V1
     # GET /api/v1/tenders: the same search as the website (Tenders::Search, open tenders
     # only), paginated, with the applied filters in "meta". Invalid filter values are
-    # ignored, like on the website. GET /api/v1/tenders/:id: any tender, open or not.
+    # ignored, like on the website. GET /api/v1/tenders/:id: any tender, open or not, with
+    # its documents and items (asking for them starts the fetch, like the tender page).
     class TendersController < BaseController
       MAX_PER_PAGE = 100
 
@@ -25,7 +26,9 @@ module Api
       end
 
       def show
-        render json: { data: TenderSerializer.new(Tender.find(params[:id]), self).as_json }
+        tender = Tender.find(params[:id])
+        tender.request_details_fetch
+        render json: { data: TenderSerializer.new(tender, self, details: true).as_json }
       end
 
       private

@@ -135,11 +135,70 @@ Field notes:
 
 ### `GET /api/v1/tenders/:id`
 
-One tender, open or not (same fields as above, inside `data`).
+One tender, open or not: the same fields as above, inside `data`, plus its **documents**
+and **items** as published on the PNCP.
 
 ```bash
 curl -H "Authorization: Bearer $LR_TOKEN" http://localhost:3000/api/v1/tenders/42
 ```
+
+```json
+{
+  "data": {
+    "id": 42,
+    "…": "same fields as in the list",
+    "details": { "status": "available", "fetched_at": "2026-11-26T10:00:00-03:00" },
+    "documents": [
+      {
+        "sequence": 1,
+        "title": "Edital do Pregão Eletrônico 45/2026",
+        "type": { "id": 2, "name": "Edital" },
+        "url": "https://pncp.gov.br/pncp-api/v1/orgaos/00000000000191/compras/2026/123/arquivos/1",
+        "published_at": "2026-11-19T17:12:03-03:00"
+      }
+    ],
+    "items": [
+      {
+        "number": 1,
+        "description": "Serviço de buffet tipo coquetel para 200 pessoas",
+        "kind": "service",
+        "quantity": "4.0",
+        "unit": "Evento",
+        "unit_estimated_value": "12000.0",
+        "total_estimated_value": "48000.0",
+        "confidential_value": false,
+        "status": "Em Andamento",
+        "judgment_criterion": "Menor preço",
+        "benefit": "Sem benefício",
+        "category": "Não se aplica",
+        "source_updated_at": "2026-11-19T17:12:03-03:00"
+      }
+    ]
+  }
+}
+```
+
+Documents and items are fetched from the PNCP **on demand**, in the background: the first
+request for a tender (here or on its web page) starts the fetch, and a new one starts when
+the tender changes on the PNCP (at most once every 10 minutes per tender).
+
+| `details.status` | Meaning | `documents` / `items` |
+| --- | --- | --- |
+| `available` | Fetched and current | lists (`[]` when the PNCP has none) |
+| `refreshing` | Fetched, but the tender changed on the PNCP since; a new fetch is under way | the previous lists |
+| `pending` | Never fetched; the fetch is under way — ask again in a few seconds | `null` |
+| `unavailable` | The PNCP reference (agency CNPJ, year, sequence) is incomplete, nothing to fetch | `null` |
+
+Field notes:
+
+- `documents[].url` downloads the file from the PNCP (only `http(s)` URLs; `null` otherwise).
+  Documents the PNCP marks as removed are not listed.
+- `items[].kind`: `material` or `service`. Values are decimal strings; `unit_estimated_value`
+  and `total_estimated_value` are `null` and `confidential_value` is `true` when the item's
+  budget is confidential ("orçamento sigiloso").
+- The list endpoint (`GET /api/v1/tenders`) does not include `details`, `documents` or
+  `items`. Its `q` and `niche` filters do match item descriptions of tenders whose items
+  were already fetched.
 
 ---
 
