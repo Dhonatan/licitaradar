@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_26_120200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -197,6 +197,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
     t.index ["status"], name: "index_sync_runs_on_status"
   end
 
+  create_table "tender_documents", force: :cascade do |t|
+    t.bigint "tender_id", null: false
+    t.integer "sequence", null: false
+    t.string "title", null: false
+    t.integer "type_id"
+    t.string "type_name"
+    t.string "url"
+    t.datetime "published_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tender_id", "sequence"], name: "index_tender_documents_on_tender_id_and_sequence", unique: true
+  end
+
+  create_table "tender_items", force: :cascade do |t|
+    t.bigint "tender_id", null: false
+    t.integer "number", null: false
+    t.text "description"
+    t.string "material_or_service"
+    t.decimal "quantity", precision: 18, scale: 4
+    t.string "unit"
+    t.decimal "unit_estimated_value", precision: 18, scale: 4
+    t.decimal "total_estimated_value", precision: 18, scale: 4
+    t.boolean "confidential_budget", default: false, null: false
+    t.string "status_name"
+    t.string "judgment_criterion_name"
+    t.string "benefit_name"
+    t.string "category_name"
+    t.datetime "source_updated_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tender_id", "number"], name: "index_tender_items_on_tender_id_and_number", unique: true
+  end
+
   create_table "tenders", force: :cascade do |t|
     t.string "pncp_control_number", null: false
     t.integer "year"
@@ -233,6 +266,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.virtual "searchable", type: :tsvector, as: "to_tsvector('portuguese'::regconfig, translate(((((((COALESCE(object_description, ''::text) || ' '::text) || COALESCE(additional_info, ''::text)) || ' '::text) || (COALESCE(agency_name, ''::character varying))::text) || ' '::text) || (COALESCE(unit_name, ''::character varying))::text), 'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ'::text, 'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN'::text))", stored: true
+    t.datetime "details_fetched_at"
+    t.datetime "details_source_updated_at"
+    t.datetime "details_requested_at"
     t.index ["modality_id"], name: "index_tenders_on_modality_id"
     t.index ["pncp_control_number"], name: "index_tenders_on_pncp_control_number", unique: true
     t.index ["proposals_close_at"], name: "index_tenders_on_proposals_close_at"
@@ -262,4 +298,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "tender_documents", "tenders", on_delete: :cascade
+  add_foreign_key "tender_items", "tenders", on_delete: :cascade
 end
