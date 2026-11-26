@@ -204,4 +204,21 @@ class Tenders::SearchTest < ActiveSupport::TestCase
 
     assert_equal 1, Tenders::Search.new(params).total_count
   end
+
+  test "matches item descriptions, ranking matches in the object first" do
+    in_items = create_tender(object_description: "Aquisição de material de expediente",
+                             items_text: "Resma de papel sulfite A4\nCaneta esferográfica azul", proposals_close_at: 2.days.from_now)
+    in_object = create_tender(object_description: "Fornecimento de papel higiênico", proposals_close_at: 9.days.from_now)
+    create_tender(object_description: "Aquisição de pneus")
+
+    assert_equal [ in_items ], search(q: "caneta esferografica").results
+    assert_equal [ in_object, in_items ], search(q: "papel").results
+    assert_equal [ in_items, in_object ], search(q: "papel", sort: "closing").results
+  end
+
+  test "niches match item descriptions too" do
+    tender = create_tender(object_description: "Contratação de serviços diversos", items_text: "Serviço de buffet para evento")
+
+    assert_equal [ tender ], search(niche: "eventos").results
+  end
 end

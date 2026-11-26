@@ -9,7 +9,9 @@ module Tenders
   #
   # Params:
   # - q: free text in web-search syntax ("frase exata", -excluir, OR). Portuguese
-  #   stemming, accents ignored, ranked with ts_rank.
+  #   stemming, accents ignored, ranked with ts_rank. Matches the object, additional info,
+  #   agency and unit names and — once fetched (Tenders::FetchDetails) — the item
+  #   descriptions, which rank lower.
   # - niche: a slug from config/niches.yml; matches any of its keywords (see Niche#tsquery).
   # - states[], modality_ids[]: lists (or comma-separated strings) of UFs / modality ids.
   # - min_value, max_value: estimated value in BRL; accepts "1500", "1500.50", "1.500,50".

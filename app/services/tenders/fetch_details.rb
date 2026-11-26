@@ -2,6 +2,7 @@ module Tenders
   # Fetches the documents and items of one tender from the PNCP integration API and
   # replaces the stored ones (rows that disappeared from the PNCP are deleted).
   #
+  # - Copies the item descriptions to `tenders.items_text`, so searches match them.
   # - Records the PNCP version it fetched (`details_source_updated_at` = the tender's
   #   `source_updated_at` when the fetch started), so a tender changed by a later sync is
   #   fetched again (Tender#details_stale?).
@@ -11,6 +12,10 @@ module Tenders
   #
   #   Tenders::FetchDetails.call(tender)  # => #<data Result documents_count=3, items_count=12, skipped_count=0>
   class FetchDetails
+    # Item descriptions copied to tenders.items_text for search (a tsvector is capped at
+    # 1 MB; this keeps the row and the index small).
+    MAX_ITEMS_TEXT = 50_000
+
     Result = Data.define(:documents_count, :items_count, :skipped_count)
 
     def self.call(...)
@@ -34,7 +39,8 @@ module Tenders
       Tender.transaction do
         replace TenderDocument, documents, key: :sequence
         replace TenderItem, items, key: :number
-        @tender.update_columns(details_fetched_at: Time.current, details_source_updated_at: version, details_requested_at: nil)
+        @tender.update_columns(items_text: items_text(items), details_fetched_at: Time.current,
+                               details_source_updated_at: version, details_requested_at: nil)
       end
 
       @logger.info("[Tenders::FetchDetails] tender #{@tender.id}: #{documents.size} documents, #{items.size} items, #{@skipped_count} skipped")
@@ -65,6 +71,10 @@ module Tenders
         @skipped_count += 1
         @logger.warn("[Tenders::FetchDetails] tender #{@tender.id}: skipped record: #{error.message}")
         nil
+      end
+
+      def items_text(items)
+        items.filter_map { |item| item[:description] }.join("\n").first(MAX_ITEMS_TEXT).presence
       end
 
       def replace(model, rows, key:)

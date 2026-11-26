@@ -28,6 +28,8 @@ class Tenders::FetchDetailsTest < ActiveSupport::TestCase
     assert service.confidential_value?
 
     tender.reload
+    assert_equal "Resma de papel sulfite A4, 75 g/m², pacote com 500 folhas\nCaneta esferográfica azul, ponta média\n" \
+                 "Serviço de manutenção preventiva de impressoras", tender.items_text
     assert_not_nil tender.details_fetched_at
     assert_equal tender.source_updated_at, tender.details_source_updated_at
     assert_nil tender.details_requested_at
@@ -59,6 +61,27 @@ class Tenders::FetchDetailsTest < ActiveSupport::TestCase
     assert_equal [ 0, 0 ], [ result.documents_count, result.items_count ]
     assert_equal 0, tender.items.count
     assert tender.reload.details_fetched?
+    assert_nil tender.items_text
+  end
+
+  test "makes the items searchable" do
+    tender = create_fetchable_tender(object_description: "Aquisição de material de expediente")
+    stub_tender_details(tender)
+
+    assert_empty Tenders::Search.new({ q: "impressoras" }).results
+    fetch(tender)
+
+    assert_equal [ tender ], Tenders::Search.new({ q: "impressoras" }).results
+  end
+
+  test "caps the item text kept for search" do
+    tender = create_fetchable_tender
+    long_items = (1..3).map { |number| { "numeroItem" => number, "descricao" => "x" * 30_000 } }
+    stub_tender_details(tender, items: long_items.to_json)
+
+    fetch(tender)
+
+    assert_equal Tenders::FetchDetails::MAX_ITEMS_TEXT, tender.reload.items_text.length
   end
 
   test "skips unidentifiable records and keeps the rest" do

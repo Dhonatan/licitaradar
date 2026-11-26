@@ -8,6 +8,7 @@ class SearchQueryPlanTest < ActiveSupport::TestCase
   setup do
     create_open_tender(object_description: "Contratação de agência de publicidade")
     create_open_tender(object_description: "Organização de eventos e cerimonial", state: "PB")
+    create_open_tender(object_description: "Material de expediente", items_text: "Caneta esferográfica azul")
     ActiveRecord::Base.connection.execute("SET LOCAL enable_seqscan = off")
   end
 
@@ -24,6 +25,13 @@ class SearchQueryPlanTest < ActiveSupport::TestCase
   test "keyword search uses the GIN index on searchable" do
     search = Tenders::Search.new({ q: "agência de publicidade" })
 
+    assert_match "index_tenders_on_searchable", plan_for(full_text_only(search))
+  end
+
+  test "a search for words only in the items uses the GIN index on searchable" do
+    search = Tenders::Search.new({ q: "caneta" })
+
+    assert_equal 1, full_text_only(search).count
     assert_match "index_tenders_on_searchable", plan_for(full_text_only(search))
   end
 
