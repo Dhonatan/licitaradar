@@ -16,6 +16,11 @@ module ActiveSupport
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
+
+    # Only ActionMailer::TestCase clears the sent e-mails by itself; without this, tests
+    # that inspect ActionMailer::Base.deliveries see mail sent by earlier tests in the
+    # same worker.
+    setup { ActionMailer::Base.deliveries.clear }
   end
 end
 
