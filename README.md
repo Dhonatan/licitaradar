@@ -38,6 +38,10 @@ LicitaRadar handles all of that once, so users only see relevant, clean opportun
 - **Search that works in Portuguese.** Keywords with or without accents, stemming
   ("eventos" finds "evento"), `"exact phrases"` and `-exclusions`, ranked by relevance;
   filters by state, modality, estimated value and "closes in N days".
+- **Documents and items of each tender.** The tender page lists the edital, termo de
+  referência and other files (linked to the PNCP) and the items with quantities and
+  estimated values, fetched in the background the first time the page is opened; item
+  descriptions become searchable too.
 - **Niche presets.** One click for marketing & communication, events or IT
   (`config/niches.yml`).
 - **Saved searches and a daily digest.** Save any search and get one e-mail every morning
@@ -200,9 +204,10 @@ bin/brakeman            # security scan
 ## Project layout
 
 ```
-lib/pncp/            PNCP API client, normalizer, PII scrubber (no Rails)
+lib/pncp/            PNCP API clients (consultation + integration), normalizers, PII scrubber (no Rails)
 app/                 Rails app (models, jobs, controllers, views)
-app/services/        Tenders::Sync (PNCP → database) and Tenders::Search (query object)
+app/services/        Tenders::Sync (PNCP → database), Tenders::FetchDetails (documents and
+                     items of one tender) and Tenders::Search (query object)
 app/services/saved_searches/  SavedSearches::Matcher (what a saved search should alert about)
                      and SavedSearches::Digest (one user's daily e-mail)
 app/controllers/api/ JSON API v1 (serializers in app/serializers/api/)

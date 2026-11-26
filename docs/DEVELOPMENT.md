@@ -42,10 +42,40 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
   a confidential estimate, not a free purchase.
 - Public page of a tender: `https://pncp.gov.br/app/editais/{cnpj}/{ano}/{sequencial}`.
 
+## Tender documents and items
+
+- `Pncp::IntegrationClient` (`lib/pncp/`) reads the public GET endpoints of the PNCP
+  **integration** API (`https://pncp.gov.br/api/pncp`, "Manual de Integração", 11.8 and
+  11.13): `/v1/orgaos/{cnpj}/compras/{ano}/{sequencial}/arquivos` (not paginated) and
+  `.../itens?pagina=&tamanhoPagina=` (a plain list without totals: read until a short or
+  repeated page, 50 per page, at most 40 pages). The manual describes the fields under
+  `documentos`/`itens`; the API answers a bare JSON array — both are accepted.
+  `Pncp::HttpClient` holds the retries shared with `Pncp::Client`; `Pncp::Values` the
+  parsing shared by the normalizers.
+- `DocumentNormalizer` / `ItemNormalizer` map to `tender_documents` / `tender_items`
+  (unique per tender + `sequence` / `number`, `ON DELETE CASCADE` with the tender).
+  Documents with `statusAtivo: false` are dropped; item values sent as 0 with
+  `orcamentoSigiloso: true` become nil ("sigiloso").
+- Details are fetched **on demand**: the tender page has a lazy Turbo Frame
+  (`/tenders/:id/details`) and `GET /api/v1/tenders/:id` asks for them too; both call
+  `Tender#request_details_fetch`, which enqueues `FetchTenderDetailsJob` when the details
+  were never fetched or `source_updated_at` changed since (`details_source_updated_at`), at
+  most once per `Tender::DETAILS_REQUEST_INTERVAL` (conditional UPDATE on
+  `details_requested_at`). The frame polls every 3 s (Stimulus `frame-reload`, up to
+  `TendersController::MAX_DETAILS_POLLS`) while nothing was fetched; stale details are
+  shown while the refresh runs. The sync never fetches details.
+- `Tenders::FetchDetails` replaces the rows (upsert + delete what disappeared) and copies
+  item descriptions to `tenders.items_text` (max 50,000 chars) for search.
+  `FetchTenderDetailsJob` retries `Pncp::Error` twice (2 min apart) and reports the last
+  failure; 4xx answers are reported without retrying.
+- Tests stub the endpoints with `stub_tender_details(tender)` and build addressable tenders
+  with `create_fetchable_tender` (`test/test_helpers/pncp_details_test_helper.rb`).
+
 ## Search notes
 
 - `tenders.searchable` is a stored generated `tsvector` (Portuguese config) over object,
-  additional info, agency and unit names, with accents folded by `translate()`.
+  additional info, agency and unit names (weight A) and `items_text` (weight D, so item
+  matches rank lower), with accents folded by `translate()`.
   `unaccent()` can't be used there (not immutable) and custom SQL functions or text
   search configurations would not survive `db/schema.rb`. Any query text must be folded
   with `Tender.fold_accents` before reaching `websearch_to_tsquery`/`to_tsquery`.
