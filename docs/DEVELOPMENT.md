@@ -141,6 +141,46 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
   the recurring schedule. `test/config/recurring_schedule_test.rb` validates
   `config/recurring.yml` with Solid Queue itself and checks the run times.
 
+## Watchlist, reminders, notes, calendar and CSV
+
+- `Watch` = user + tender (unique, at most `Watch::MAX_PER_USER` = 500 per user), with the
+  private `note` (plain text, 5,000 chars, blank stored as nil) and the reminder columns.
+  `Watch.watch!(user, tender)` is the idempotent way to create one. `Watch` is in
+  `Tenders::Archive::KEPT_WHEN_REFERENCED_BY`: watched tenders are never archived.
+- "Acompanhar" is `POST/DELETE /tenders/:tender_id/watch` (`WatchesController`), answered
+  with `watches/toggle.turbo_stream.erb` (swaps `dom_id(tender, :watch)` and, on the tender
+  page, the note container `dom_id(tender, :watch_note)`); without Turbo it redirects back.
+  Signed-out visitors get a link to `GET /tenders/:id/watch`, which requires login and then
+  redirects to the tender. The results page loads the watched ids of the page in one query.
+- "Minhas licitações" is `/minhas-licitacoes` (`watches_path`), ordered by
+  `Watch.by_deadline` (open first by deadline, then closed, then no deadline). Status
+  badges come from `Tender#proposals_status` (`open`, `closing_today`, `closed`,
+  `unknown`), shared with the API.
+- Notes: `Watches::NotesController` (`/tenders/:tender_id/watch/note`, show/edit/update)
+  inside the Turbo Frame `dom_id(watch, :note)`; frame requests get the partial
+  `watches/notes/_note`, plain requests a normal page and a redirect to the tender.
+- Deadline reminders: `users.deadline_reminder_days` (0 = off, 1, 3 default, 7; set on
+  "Minha conta" through `ReminderSettingsController`). `Watch.due_for_reminder(days, now)`
+  = open tenders closing by the end of the day `days` calendar days ahead whose
+  `reminded_close_at` differs from the current deadline. `Watches::DeadlineReminder`
+  sends one e-mail per confirmed user (`ReminderMailer#deadlines`, with the notes) and
+  stores the deadline each watch was reminded about only after the e-mail left.
+  `SendDeadlineRemindersJob` runs daily at 07:30 (`config/recurring.yml`).
+- Calendar: `users.calendar_token` (`has_secure_token`, 32 chars) and
+  `GET /calendario/:token.ics` (`CalendarFeedsController`, no login — the token is the
+  secret; 404 otherwise). `Watches::Calendar` writes RFC 5545 by hand (CRLF, TEXT escaping,
+  folding at 75 octets): one event per watched deadline from 30 days ago on, the 30
+  minutes before the deadline, UID `licitaradar-user-<id>-tender-<id>`. Notes are never
+  included. `POST /calendar_token` regenerates the token.
+- CSV: `Tenders::CsvExport` yields the BOM + header and then rows read in offset batches
+  of 500 from an **ordered** relation (`Tenders::Search#ordered_scope`, or
+  `user.watches.by_deadline` with `notes: true`), at most 5,000 rows. `;` separator,
+  decimal comma, `dd/mm/aaaa hh:mm`, formula-looking text prefixed with `'`. The
+  `CsvStreaming` concern sets the download headers and assigns the enumerator to
+  `response_body` (with `Last-Modified`, so `Rack::ETag` does not buffer it). The results
+  CSV (`/tenders.csv?...`) requires login and is rate limited (20 per 10 minutes per user);
+  the watchlist CSV is `/minhas-licitacoes.csv`.
+
 ## JSON API
 
 - `Api::V1::BaseController < ActionController::API`: no cookies/CSRF; `Authorization:
@@ -181,7 +221,7 @@ If your environment cannot reach rubygems.org or pncp.gov.br:
 - `Tenders::Archive` deletes tenders whose proposals closed more than `ARCHIVE_AFTER_DAYS`
   (default 180) days ago — or, without a closing date, last updated that long ago — in
   batches with `delete_all`. Tenders referenced by any model in
-  `Tenders::Archive::KEPT_WHEN_REFERENCED_BY` (today `Notification`) are kept so old
+  `Tenders::Archive::KEPT_WHEN_REFERENCED_BY` (`Notification`, `Watch`) are kept so old
   digest links keep working. **Every new table with a `tender_id` (watchlists, documents,
   items...) must be added there or decide explicitly to cascade.**
 - `ArchiveOldTendersJob` runs it weekly (`config/recurring.yml`, Sundays 03:15) and logs

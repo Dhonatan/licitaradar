@@ -46,6 +46,12 @@ LicitaRadar handles all of that once, so users only see relevant, clean opportun
   (`config/niches.yml`).
 - **Saved searches and a daily digest.** Save any search and get one e-mail every morning
   with what is new, most urgent deadlines first, with one-click unsubscribe.
+- **Watchlist ("Minhas licitações").** Follow any tender with one click, keep private
+  notes on it, get an e-mail 1, 3 or 7 days before the proposals deadline (again if the
+  agency moves it) and subscribe to the deadlines from Google Agenda, Outlook or Apple
+  Calendar through a secret `.ics` URL.
+- **CSV export** of search results (up to 5,000 rows) and of the watchlist, ready for Excel
+  in Portuguese (UTF-8 with BOM, `;`, decimal comma).
 - **JSON API v1** with bearer tokens, for integrations and the upcoming React portal
   ([`docs/API.md`](docs/API.md)).
 - **Built to run unattended.** Retries at three levels, an alert e-mail when the sync keeps
@@ -65,7 +71,9 @@ LicitaRadar handles all of that once, so users only see relevant, clean opportun
 | Results with filters | `/tenders?niche=eventos` |
 | Tender detail with deadline countdown | `/tenders/:id` |
 | Saved searches | `/saved_searches` |
+| Watched tenders, notes and calendar link | `/minhas-licitacoes` |
 | Daily digest e-mail (preview) | `/rails/mailers/digest_mailer/daily` |
+| Deadline reminder e-mail (preview) | `/rails/mailers/reminder_mailer/deadlines` |
 | Admin status | `/status` |
 
 ## Architecture
@@ -83,10 +91,10 @@ flowchart LR
     Web["Web UI<br/>(Hotwire)"]
     API["JSON API v1<br/>(bearer tokens)"]
     Status["/status"]
-    Queue["Solid Queue<br/>recurring: sync 6/6 h, digest 07:00"]
+    Queue["Solid Queue<br/>recurring: sync 6/6 h, digest 07:00,<br/>deadline reminders 07:30"]
   end
 
-  DB[("PostgreSQL<br/>tenders (tsvector + GIN), users,<br/>saved searches, notifications,<br/>sync runs, Solid Queue tables")]
+  DB[("PostgreSQL<br/>tenders (tsvector + GIN), users,<br/>saved searches, notifications,<br/>watches, sync runs, Solid Queue tables")]
   SMTP["SMTP provider"]
   Users(["Users / integrations"])
   Portal(["React portal<br/>(Phase 2)"])
@@ -122,6 +130,7 @@ log and report in [`docs/sprint/`](docs/sprint).
 | Recurring schedule: sync every 6 h, digest at 07:00 (Solid Queue) | ✅ done, tested |
 | Accounts (sign-up, login, password reset) + saved searches + match engine | ✅ done, tested |
 | Daily e-mail alerts (one digest per user, unsubscribe links) | ✅ done, tested |
+| Watchlist, private notes, deadline reminders, calendar feed, CSV export | ✅ done, tested |
 | JSON API v1 with bearer tokens ([`docs/API.md`](docs/API.md)) | ✅ done, tested |
 | Production Docker image + deploy guide ([`docs/DEPLOY.md`](docs/DEPLOY.md)) | ✅ done, smoke-tested in CI |
 | React portal | 🗓️ planned (Phase 2) |
@@ -210,6 +219,8 @@ app/services/        Tenders::Sync (PNCP → database), Tenders::FetchDetails (d
                      items of one tender) and Tenders::Search (query object)
 app/services/saved_searches/  SavedSearches::Matcher (what a saved search should alert about)
                      and SavedSearches::Digest (one user's daily e-mail)
+app/services/watches/  Watches::DeadlineReminder (one user's reminder e-mail) and
+                     Watches::Calendar (iCalendar feed); Tenders::CsvExport (CSV downloads)
 app/controllers/api/ JSON API v1 (serializers in app/serializers/api/)
 config/recurring.yml recurring jobs (Solid Queue)
 config/locales/      Portuguese UI messages (English fallback)
