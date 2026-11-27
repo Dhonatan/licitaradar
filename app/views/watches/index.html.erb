@@ -28,6 +28,7 @@
           <% if (location = tender_location(tender)) %>· <%= location %><% end %>
         </p>
         <p class="tender-card__value"><%= tender_value(tender) %></p>
+        <%= render "watches/notes/note", watch: watch %>
         <div class="tender-card__actions">
           <%= render "watches/button", tender: tender, watch: watch %>
         </div>

@@ -38,6 +38,10 @@
     <% end %>
   </div>
 
+  <div id="<%= dom_id(@tender, :watch_note) %>">
+    <%= render "watches/notes/note", watch: @watch if @watch %>
+  </div>
+
   <%
     details = {
       "Valor estimado" => tender_value(@tender),

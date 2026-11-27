@@ -6,7 +6,8 @@ Olá,
 * <%= tender.object_description.to_s.truncate(220) %>
   <%= [ tender.agency_name, tender_location(tender), tender_modality(tender) ].compact_blank.join(" · ") %>
   <%= deadline_text(tender.proposals_close_at).upcase_first %> (<%= date_time_br(tender.proposals_close_at) %>) · <%= tender.confidential_value? ? "Valor sigiloso" : brl(tender.estimated_value) %>
-  <%= tender_url(tender) %>
+  <% if watch.note.present? %>Sua nota: <%= watch.note.squish.truncate(300) %>
+  <% end %><%= tender_url(tender) %>
 <% end %>
 
 Confira sempre o edital oficial antes de enviar a sua proposta.

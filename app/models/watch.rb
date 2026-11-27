@@ -2,11 +2,16 @@
 # keeps every watched tender, however old.
 class Watch < ApplicationRecord
   MAX_PER_USER = 500
+  MAX_NOTE_LENGTH = 5_000
 
   belongs_to :user
   belongs_to :tender
 
+  # Private note (plain text, only its owner sees it). Blank notes are stored as nil.
+  normalizes :note, with: ->(note) { note.strip.gsub("\r\n", "\n").presence }
+
   validates :tender_id, uniqueness: { scope: :user_id }
+  validates :note, length: { maximum: MAX_NOTE_LENGTH }
   validate :watches_per_user_limit, on: :create
 
   # Tenders still open for proposals first (closest deadline first), then the closed ones

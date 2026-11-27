@@ -1,0 +1,18 @@
+<% content_for :title, "Nota privada — LicitaRadar" %>
+
+<%= turbo_frame_tag dom_id(@watch, :note), class: "watch-note" do %>
+  <%= form_with model: @watch, url: tender_watch_note_path(@tender), method: :patch, class: "stacked-form watch-note__form" do |form| %>
+    <%= render "shared/form_errors", record: @watch %>
+
+    <div class="field">
+      <%= form.label :note, "Nota privada (só você vê)" %>
+      <%= form.text_area :note, rows: 4, maxlength: Watch::MAX_NOTE_LENGTH, autofocus: true,
+                                placeholder: "Ex.: pedir certidões até sexta; dúvida sobre o item 3 enviada ao pregoeiro" %>
+    </div>
+
+    <div class="form-actions">
+      <%= form.submit "Salvar nota", class: "button button--small" %>
+      <%= link_to "Cancelar", tender_watch_note_path(@tender), class: "button button--secondary button--small" %>
+    </div>
+  <% end %>
+<% end %>

@@ -19,6 +19,9 @@
       (<%= date_time_br(tender.proposals_close_at) %>)
       · <%= tender.confidential_value? ? "Valor sigiloso" : brl(tender.estimated_value) %>
     </p>
+    <% if watch.note.present? %>
+      <p style="margin: 6px 0 0; font-size: 14px; color: #5b6475;"><em>Sua nota:</em> <%= watch.note.squish.truncate(300) %></p>
+    <% end %>
   </div>
 <% end %>
 

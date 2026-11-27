@@ -207,3 +207,9 @@ input[type="email"], input[type="password"], input[type="number"] {
 .tender-card__actions { margin-top: 0.6rem; }
 .watch-button { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .watch-button__error { color: #a61b1b; font-size: 0.875rem; }
+.watch-note { display: block; margin: 0.5rem 0 0; font-size: 0.9375rem; }
+.watch-note__text { background: #fffbea; border: 1px solid #f3e3a1; border-radius: 8px; padding: 0.5rem 0.75rem; margin-bottom: 0.25rem; }
+.watch-note__text p { margin: 0.25rem 0 0; color: var(--ink); overflow-wrap: anywhere; }
+.watch-note__label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #8a5a00; }
+.watch-note__form { margin-top: 0.5rem; }
+.watch-note__form textarea { width: 100%; font: inherit; }

@@ -31,6 +31,16 @@ class ReminderMailerTest < ActionMailer::TestCase
     end
   end
 
+  test "deadlines includes the private note" do
+    watch = Watch.watch!(@user, create_open_tender(object_description: "Serviço de buffet"))
+    watch.update!(note: "Levar amostras na sessão")
+
+    mail = ReminderMailer.deadlines(@user, [ watch ])
+
+    assert_includes mail.text_part.body.to_s, "Sua nota: Levar amostras na sessão"
+    assert_includes mail.html_part.body.to_s, "Levar amostras na sessão"
+  end
+
   test "a single tender is named in the subject" do
     watch = Watch.watch!(@user, create_open_tender(object_description: "Serviço de buffet para formatura"))
 

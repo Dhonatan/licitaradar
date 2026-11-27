@@ -1,0 +1,12 @@
+<%# The private note of a watch, in the frame that the "Editar nota" form replaces. %>
+<%= turbo_frame_tag dom_id(watch, :note), class: "watch-note" do %>
+  <% if watch.note.present? %>
+    <div class="watch-note__text">
+      <span class="watch-note__label">Sua nota</span>
+      <%= simple_format(h(watch.note)) %>
+    </div>
+    <%= link_to "Editar nota", edit_tender_watch_note_path(watch.tender), class: "link-button" %>
+  <% else %>
+    <%= link_to "Adicionar nota privada", edit_tender_watch_note_path(watch.tender), class: "link-button" %>
+  <% end %>
+<% end %>
