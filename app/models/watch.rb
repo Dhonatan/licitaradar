@@ -22,6 +22,18 @@ class Watch < ApplicationRecord
     joins(:tender).order(Arel.sql(order_sql))
   }
 
+  # Watches of tenders still open whose proposals close within `days` calendar days
+  # (Brasília time: with 3 days, on Friday morning everything closing until Monday 23:59)
+  # and that were not reminded about this deadline yet.
+  scope :due_for_reminder, ->(days, now = Time.current) {
+    last_day = (now.in_time_zone.to_date + days.to_i).end_of_day
+    joins(:tender)
+      .where(tenders: { status_id: Tender::PUBLISHED_STATUS_ID })
+      .where(Tender.arel_table[:proposals_close_at].gt(now))
+      .where(Tender.arel_table[:proposals_close_at].lteq(last_day))
+      .where("watches.reminded_close_at IS NULL OR watches.reminded_close_at <> tenders.proposals_close_at")
+  }
+
   # Finds the user's watch of the tender or creates it (safe against double clicks: the
   # unique index decides). Returns the watch, unsaved with errors when the limit is reached.
   def self.watch!(user, tender)

@@ -9,6 +9,8 @@ class User < ApplicationRecord
   MIN_PASSWORD_LENGTH = 8
   MAX_EMAIL_LENGTH = 254
   CONFIRMATION_EXPIRES_IN = 3.days
+  # Days before the proposals deadline of a watched tender to send a reminder (0 = off).
+  DEADLINE_REMINDER_OPTIONS = [ 0, 1, 3, 7 ].freeze
 
   has_secure_password
   has_many :sessions, dependent: :destroy
@@ -35,11 +37,18 @@ class User < ApplicationRecord
                                 format: { with: URI::MailTo::EMAIL_REGEXP }, allow_nil: true
   validate :unconfirmed_email_must_be_available
   validates :password, length: { minimum: MIN_PASSWORD_LENGTH }, allow_nil: true
+  validates :deadline_reminder_days, inclusion: { in: DEADLINE_REMINDER_OPTIONS }
 
   scope :confirmed, -> { where.not(confirmed_at: nil) }
+  # Confirmed users with deadline reminders on who watch something.
+  scope :with_deadline_reminders, -> { confirmed.where(deadline_reminder_days: 1..).where(id: Watch.select(:user_id)) }
 
   def confirmed?
     confirmed_at.present?
+  end
+
+  def deadline_reminders?
+    deadline_reminder_days.to_i.positive?
   end
 
   # True while there is an address waiting for its confirmation link: the account's own

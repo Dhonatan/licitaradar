@@ -1,0 +1,33 @@
+<p>Olá,</p>
+
+<p>
+  <%= @watches.one? ? "Uma licitação que você acompanha está" : "#{@watches.size} licitações que você acompanha estão" %>
+  com o <strong>prazo de propostas chegando</strong>:
+</p>
+
+<% @watches.each do |watch| %>
+  <% tender = watch.tender %>
+  <div style="border: 1px solid #dfe3ea; border-radius: 8px; padding: 12px 14px; margin: 0 0 10px;">
+    <p style="margin: 0 0 4px; font-weight: bold;">
+      <%= link_to tender.object_description.to_s.truncate(220), tender_url(tender), style: "color: #1f2733;" %>
+    </p>
+    <p style="margin: 0; font-size: 14px; color: #5b6475;">
+      <%= [ tender.agency_name, tender_location(tender), tender_modality(tender) ].compact_blank.join(" · ") %>
+    </p>
+    <p style="margin: 4px 0 0; font-size: 14px;">
+      <strong><%= deadline_text(tender.proposals_close_at).upcase_first %></strong>
+      (<%= date_time_br(tender.proposals_close_at) %>)
+      · <%= tender.confidential_value? ? "Valor sigiloso" : brl(tender.estimated_value) %>
+    </p>
+  </div>
+<% end %>
+
+<p>Confira sempre o edital oficial antes de enviar a sua proposta. <%= link_to "Ver minhas licitações", watches_url %></p>
+
+<hr style="border: 0; border-top: 1px solid #dfe3ea; margin: 28px 0 12px;">
+
+<p style="color: #5b6475; font-size: 13px;">
+  Você recebe este lembrete porque acompanha estas licitações no LicitaRadar e pediu aviso
+  <%= pluralize(@user.deadline_reminder_days, "dia", plural: "dias") %> antes do prazo.
+  <%= link_to "Mudar ou desligar os lembretes", account_url(anchor: "deadline-reminders") %>
+</p>

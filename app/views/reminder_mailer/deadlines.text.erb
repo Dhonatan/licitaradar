@@ -1,0 +1,17 @@
+Olá,
+
+<%= @watches.one? ? "Uma licitação que você acompanha está com o prazo de propostas chegando:" : "#{@watches.size} licitações que você acompanha estão com o prazo de propostas chegando:" %>
+<% @watches.each do |watch| %>
+<% tender = watch.tender %>
+* <%= tender.object_description.to_s.truncate(220) %>
+  <%= [ tender.agency_name, tender_location(tender), tender_modality(tender) ].compact_blank.join(" · ") %>
+  <%= deadline_text(tender.proposals_close_at).upcase_first %> (<%= date_time_br(tender.proposals_close_at) %>) · <%= tender.confidential_value? ? "Valor sigiloso" : brl(tender.estimated_value) %>
+  <%= tender_url(tender) %>
+<% end %>
+
+Confira sempre o edital oficial antes de enviar a sua proposta.
+Minhas licitações: <%= watches_url %>
+
+--
+Você recebe este lembrete porque acompanha estas licitações no LicitaRadar e pediu aviso <%= pluralize(@user.deadline_reminder_days, "dia", plural: "dias") %> antes do prazo.
+Mudar ou desligar os lembretes: <%= account_url(anchor: "deadline-reminders") %>

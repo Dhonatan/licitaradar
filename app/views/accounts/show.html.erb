@@ -25,6 +25,25 @@
     <% end %>
   </section>
 
+  <section class="card" id="deadline-reminders">
+    <h2>Lembretes de prazo</h2>
+    <p class="muted">
+      Receba um e-mail antes do fim do prazo de propostas das licitações que você acompanha em
+      <%= link_to "Minhas licitações", watches_path %>. Se o órgão mudar o prazo, você recebe um novo lembrete.
+    </p>
+
+    <%= form_with model: @user, url: reminder_settings_path, method: :patch, class: "stacked-form" do |form| %>
+      <div class="field">
+        <%= form.label :deadline_reminder_days, "Avisar" %>
+        <%= form.select :deadline_reminder_days, deadline_reminder_options, { selected: @user.deadline_reminder_days_in_database } %>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit "Salvar lembretes", class: "button" %>
+      </div>
+    <% end %>
+  </section>
+
   <section class="card" id="change-email">
     <h2>Trocar e-mail</h2>
     <p class="muted">Enviaremos um link de confirmação para o novo endereço. Para cancelar uma troca pendente, informe o e-mail atual.</p>

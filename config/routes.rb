@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   resources :passwords, param: :token, only: %i[ new create edit update ]
   resources :email_confirmations, param: :token, only: %i[ new create show ]
   resource :account, only: %i[ show update ]
+  resource :reminder_settings, only: :update
 
   resources :tenders, only: %i[ index show ] do
     # Documents and items, loaded into the tender page by a lazy Turbo Frame.
