@@ -38,6 +38,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :tenders, only: %i[ index show ]
       resources :saved_searches, only: %i[ index show create destroy ]
+      resources :watches, only: %i[ index create destroy ]
     end
   end
 

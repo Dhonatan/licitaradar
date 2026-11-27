@@ -87,4 +87,16 @@ class QueryCountsTest < ActionDispatch::IntegrationTest
     assert_select ".tender-card .watch-button form", 25
     assert_operator signed_in, :<=, signed_out + 3 # session, user, watches
   end
+
+  test "the API watches index runs the same queries for 1 or 10 watches" do
+    user = create_user
+    headers = auth_headers(api_token_for(user))
+    add_watches = ->(count) { count.times { Watch.watch!(user, create_open_tender) } }
+
+    few = queries_with(-> { add_watches.call(1) }) { get api_v1_watches_path, headers: headers }
+    many = queries_with(-> { add_watches.call(9) }) { get api_v1_watches_path, headers: headers }
+
+    assert_equal 10, response.parsed_body["data"].size
+    assert_equal few, many
+  end
 end

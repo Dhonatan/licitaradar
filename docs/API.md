@@ -1,7 +1,8 @@
 # LicitaRadar API v1
 
 JSON API over the same data as the website: search the tenders that are open for
-proposals and manage your saved searches (whose new matches arrive in the daily e-mail).
+proposals, manage your saved searches (whose new matches arrive in the daily e-mail) and
+the tenders you watch.
 It is the base for the future React portal and for integrations (CRMs, spreadsheets, bots).
 
 - Base URL: `https://<your-host>/api/v1` (locally `http://localhost:3000/api/v1`)
@@ -280,6 +281,69 @@ Validation errors return `422`:
 
 ```bash
 curl -X DELETE -H "Authorization: Bearer $LR_TOKEN" http://localhost:3000/api/v1/saved_searches/7
+```
+
+`204 No Content`.
+
+## Watches
+
+The tenders the token owner follows ("Minhas licitações" on the website), up to 500 per
+account. Watched tenders get deadline reminders by e-mail (setting on "Minha conta") and
+appear in the user's calendar feed. Only the token owner's watches are visible.
+
+### `GET /api/v1/watches`
+
+All watches, tenders still open for proposals first (closest deadline first), then the
+closed ones (most recently closed first). Not paginated.
+
+```bash
+curl -H "Authorization: Bearer $LR_TOKEN" http://localhost:3000/api/v1/watches
+```
+
+```json
+{
+  "data": [
+    {
+      "id": 31,
+      "tender_id": 1042,
+      "proposals_status": "open",
+      "note": "Pedir certidões até sexta",
+      "reminded_close_at": null,
+      "created_at": "2026-11-27T09:12:44-03:00",
+      "tender": { "id": 1042, "object": "Contratação de empresa para organização de eventos", "...": "same fields as GET /api/v1/tenders" },
+      "links": { "self": "http://localhost:3000/api/v1/watches/31" }
+    }
+  ]
+}
+```
+
+- `proposals_status`: `open`, `closing_today` (still open, closes today in Brasília
+  time), `closed` or `unknown` (published without a deadline).
+- `note`: the user's private note (plain text, up to 5,000 characters) or `null`.
+- `reminded_close_at`: the deadline the last reminder e-mail was about (`null` if none
+  was sent). A deadline moved by the PNCP is reminded again.
+
+### `POST /api/v1/watches`
+
+The body must have a `watch` object with `tender_id` and, optionally, `note`.
+
+```bash
+curl -X POST http://localhost:3000/api/v1/watches \
+  -H "Authorization: Bearer $LR_TOKEN" -H "Content-Type: application/json" \
+  -d '{ "watch": { "tender_id": 1042, "note": "Pedir certidões até sexta" } }'
+```
+
+`201 Created` with the watch in `data` and its URL in the `Location` header. Watching a
+tender that is already watched answers `200 OK` with the existing watch; its note is
+replaced only when the body has a `note` (send `null` to remove it). Unknown tenders
+answer `404`; a note that is too long or the 500-watch limit answer `422` (`invalid`).
+
+### `DELETE /api/v1/watches/:id`
+
+`:id` is the watch id (`data[].id`), not the tender id.
+
+```bash
+curl -X DELETE -H "Authorization: Bearer $LR_TOKEN" http://localhost:3000/api/v1/watches/31
 ```
 
 `204 No Content`.
