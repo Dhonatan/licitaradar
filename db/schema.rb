@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_26_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_27_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -288,6 +288,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_130000) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  create_table "watches", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "tender_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tender_id"], name: "index_watches_on_tender_id"
+    t.index ["user_id", "tender_id"], name: "index_watches_on_user_id_and_tender_id", unique: true
+  end
+
   add_foreign_key "api_tokens", "users", on_delete: :cascade
   add_foreign_key "notifications", "saved_searches", on_delete: :cascade
   add_foreign_key "notifications", "tenders", on_delete: :cascade
@@ -301,4 +310,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_130000) do
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "tender_documents", "tenders", on_delete: :cascade
   add_foreign_key "tender_items", "tenders", on_delete: :cascade
+  add_foreign_key "watches", "tenders", on_delete: :cascade
+  add_foreign_key "watches", "users", on_delete: :cascade
 end
