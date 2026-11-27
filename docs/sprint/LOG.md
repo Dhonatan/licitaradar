@@ -687,3 +687,110 @@ One entry per working session, newest at the bottom.
 - In development, opening a seeded (fictional) tender enqueues a fetch that will 404 on
   the real PNCP and be reported; harmless.
 - Nothing moved to Day 8. Day 8 must add `Watch` to `Tenders::Archive::KEPT_WHEN_REFERENCED_BY`.
+
+## Day 8 — Fri, Nov 27 · Watchlist, reminders, notes, exports ✅
+
+**Done**
+- **Watchlist:** `watches` table (user + tender, unique, FK cascades), `Watch.watch!`
+  (idempotent, safe against double clicks), at most 500 per user. "Acompanhar" button on
+  the tender page and on every result card: `POST/DELETE /tenders/:tender_id/watch`,
+  answered with a Turbo Stream that swaps the button (plain redirect without JavaScript);
+  signed-out visitors get a link that asks for login and brings them back to the tender.
+  The results page loads the watched ids of the page in one query. "Minhas licitações"
+  (`/minhas-licitacoes`, link in the navigation) sorted by `Watch.by_deadline` (open
+  tenders by closest deadline, then closed ones, then those without a deadline) with
+  badges from `Tender#proposals_status` (aberta, encerra hoje, encerrada, prazo não
+  informado). `Watch` added to `Tenders::Archive::KEPT_WHEN_REFERENCED_BY`.
+- **Deadline reminders:** `users.deadline_reminder_days` (off / 1 / 3 / 7, default 3) on
+  "Minha conta". `Watch.due_for_reminder` + `Watches::DeadlineReminder`: one e-mail per
+  confirmed user (`ReminderMailer#deadlines`, HTML + text, preview) with the open watched
+  tenders closing within N calendar days; each watch stores `reminded_close_at`, so the
+  same deadline is never reminded twice and a deadline moved by the PNCP is reminded
+  again. Recorded only after the e-mail left. `SendDeadlineRemindersJob` daily at 07:30
+  Brasília (after the digest), one failing user does not stop the others.
+- **Private notes:** `watches.note` (plain text, up to 5,000 characters, blank = nil),
+  shown on the tender page and the watchlist and edited inline in a Turbo Frame
+  (`Watches::NotesController`); escaped; also in the reminder e-mail and the watchlist CSV.
+- **Calendar feed:** `users.calendar_token` (`has_secure_token`, 32 chars, unique) and
+  `GET /calendario/:token.ics` without login. `Watches::Calendar` writes RFC 5545 by hand
+  (CRLF, TEXT escaping, folding at 75 octets without splitting UTF-8 characters): one
+  event per watched deadline from 30 days ago on, lasting the 30 minutes before the
+  deadline, with a description and the tender URL; notes never included. The watchlist
+  shows the URL, a `webcal://` subscribe link and "Gerar novo link" (`POST /calendar_token`).
+- **CSV export:** `Tenders::CsvExport` + `CsvStreaming` concern. `/tenders.csv?...` (same
+  filters and order as the results, up to 5,000 rows, login required, 20 exports per 10
+  minutes per user) and `/minhas-licitacoes.csv` (with the "Nota" column). Generated while
+  streamed (enumerator as `response_body`, ordered offset batches of 500), UTF-8 with BOM,
+  `;` separators, decimal comma, Brasília dates, formula-looking cells prefixed with `'`.
+  `gem "csv"` added (not a default gem from Ruby 3.4).
+- **API v1:** `GET /api/v1/watches` (by deadline, with status, note, `reminded_close_at`
+  and the tender), `POST` (`{ "watch": { "tender_id", "note" } }`, 201, or 200 with the
+  existing watch), `DELETE /api/v1/watches/:id` (watch id). `docs/API.md` updated.
+- Docs: DEVELOPMENT.md ("Watchlist, reminders, notes, calendar and CSV", archive note),
+  README (features, pages, architecture, layout).
+- Rails suite: 497 runs, 2374 assertions, 0 failures (406 on day 7); lib: 58 runs.
+  Query-count tests added for the watchlist page, the API watches index and the results
+  page of a signed-in user.
+
+**Commits**
+- `ff28458` feat: watch tenders and list them on "Minhas licitações"
+- `35ca394` feat: e-mail reminders before the proposals deadline of watched tenders
+- `181fb15` fix: refuse non-numeric deadline reminder settings instead of turning reminders off
+- `fb35f86` feat: private notes on watched tenders, edited inline
+- `0f2afeb` feat: secret iCalendar feed with the deadlines of watched tenders
+- `6f23534` test: expect the escaped semicolon in the calendar summary
+- `344acb1` feat: CSV export of search results and of the watchlist
+- `c1ee5c4` test: pass the search params as a hash in the CSV export test
+- `885a6cc` feat(api): GET/POST/DELETE /api/v1/watches
+- `81a188b` docs: document the watchlist, reminders, notes, calendar feed and CSV export
+- plus this docs commit; the bot regenerated `db/schema.rb` / `Gemfile.lock` (`03b14e9`,
+  `83de343`, `4b54e8e`)
+
+**CI**
+- Three red runs, each fixed by the next push:
+  - `35ca394`: `ReminderSettingsControllerTest` — Active Record casts `"abc"` to `0` for an
+    integer column, so a garbage value turned reminders off instead of being refused. Real
+    bug, fixed in `181fb15` (strict `Integer()` parsing in the controller).
+  - `0f2afeb`: wrong expected string in a calendar escaping test (the code was right).
+  - `344acb1`: a new test called `Tenders::Search.new(q: ...)` with keywords instead of a
+    hash.
+- Every later run green (lib, RuboCop, Brakeman, Rails tests, Docker smoke test).
+
+**Decisions**
+- Watch routes are nested under the tender (`/tenders/:id/watch`), so buttons only need
+  the tender; the watchlist lives at `/minhas-licitacoes` (Portuguese, like `/calendario`).
+  The API deletes by watch id (`/api/v1/watches/:id`), REST style.
+- Unwatching on the watchlist swaps the card's button back to "Acompanhar" instead of
+  removing the card, so a wrong click is undone in place; the card is gone on reload.
+- Closed tenders stay on the watchlist (and keep the tender out of the archive) until the
+  user removes them.
+- Reminder window in **calendar days** (Brasília): with 3 days, Friday's 07:30 run covers
+  everything closing until Monday 23:59. A tender watched inside the window is reminded at
+  the next run. Only confirmed accounts get reminders, like the digest.
+- Reminders link to "Minha conta" for the setting instead of a signed one-click
+  unsubscribe: they are about tenders the user chose to follow. Candidate for later if
+  providers complain (List-Unsubscribe like the digest).
+- Calendar token stored in plain text (it must be shown again on the page; it only reveals
+  which public tenders the user watches). Notes are excluded because feed URLs end up in
+  third-party calendar services. New accounts get a token at sign-up (`has_secure_token`);
+  existing accounts see "Gerar link do calendário". Events are 30 minutes ending at the
+  deadline and `TRANSP:TRANSPARENT` (they do not block the user's time).
+- iCalendar written by hand instead of the `icalendar` gem: a few dozen lines, fully
+  tested, one dependency less.
+- CSV for Excel in Portuguese: `;` and decimal comma (a comma-separated file opens in a
+  single column in pt-BR Excel). The results CSV requires an account (it is a member
+  feature and makes bulk scraping costlier) and is rate limited; the watchlist CSV is not
+  (500 rows max).
+- Streaming with an enumerator as `response_body` rather than `ActionController::Live`
+  (no extra thread, works with the test helpers); `Last-Modified` keeps `Rack::ETag` from
+  buffering it and `X-Accel-Buffering: no` tells nginx not to.
+
+**Open problems / notes**
+- The reminder and digest e-mails were only tested with the test delivery method; check
+  the first real ones after deploy (#7).
+- The calendar feed was validated by tests against RFC 5545 rules, not imported into real
+  calendar apps here (no network/GUI). After deploy, subscribe once in Google Agenda and
+  Outlook to confirm.
+- Rate limits and the CSV export limit count in `Rails.cache`: production still needs a
+  shared cache when there is more than one host (#5).
+- Nothing moved to Day 9.

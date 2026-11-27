@@ -159,20 +159,20 @@ Consultas", e.g. via web search) before writing fixtures, and keep fixtures fict
 - [x] API v1: include `documents` and `items` in `GET /api/v1/tenders/:id`; update
       `docs/API.md`.
 
-## Day 8 — Fri, Nov 27 · Watchlist, reminders, notes, exports
+## Day 8 — Fri, Nov 27 · Watchlist, reminders, notes, exports ✅
 
-- [ ] **Watchlist:** "Acompanhar" button on tender pages and results (`Watch` model,
+- [x] **Watchlist:** "Acompanhar" button on tender pages and results (`Watch` model,
       user + tender, unique); "Minhas licitações" page sorted by deadline with status
       badges (aberta, encerra hoje, encerrada).
-- [ ] **Deadline reminders:** e-mail N days before the proposals deadline (user setting:
+- [x] **Deadline reminders:** e-mail N days before the proposals deadline (user setting:
       off / 1 / 3 / 7 days, default 3), sent by a daily job, never twice for the same
       watch + deadline; if the PNCP changes the deadline, a new reminder is allowed.
-- [ ] **Private notes** on watched tenders (plain text, per user) with Turbo inline editing.
-- [ ] **Calendar feed:** per-user secret `.ics` URL (`/calendario/:token.ics`) with the
+- [x] **Private notes** on watched tenders (plain text, per user) with Turbo inline editing.
+- [x] **Calendar feed:** per-user secret `.ics` URL (`/calendario/:token.ics`) with the
       deadlines of watched tenders; regenerate-token button. Tests for the iCalendar output.
-- [ ] **CSV export** of search results and of the watchlist (max 5,000 rows, streamed,
+- [x] **CSV export** of search results and of the watchlist (max 5,000 rows, streamed,
       UTF-8 with BOM so Excel opens accents correctly).
-- [ ] API v1: `GET/POST/DELETE /api/v1/watches`; update `docs/API.md`.
+- [x] API v1: `GET/POST/DELETE /api/v1/watches`; update `docs/API.md`.
 
 ## Day 9 — Sat, Nov 28 · Public pages, SEO, stats
 
