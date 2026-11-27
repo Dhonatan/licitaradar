@@ -12,4 +12,9 @@
     <% if (location = tender_location(tender)) %>· <%= location %><% end %>
   </p>
   <p class="tender-card__value"><%= tender_value(tender) %></p>
+  <% if local_assigns.key?(:watched_tender_ids) %>
+    <div class="tender-card__actions">
+      <%= render "watches/button", tender: tender, watch: watched_tender_ids.include?(tender.id) %>
+    </div>
+  <% end %>
 </li>

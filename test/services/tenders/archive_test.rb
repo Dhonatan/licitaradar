@@ -35,6 +35,19 @@ module Tenders
       assert_equal 1, Notification.count
     end
 
+    test "keeps old tenders that someone watches" do
+      watched = create_open_tender(proposals_close_at: 200.days.ago)
+      Watch.watch!(create_user, watched)
+      forgotten = create_open_tender(proposals_close_at: 200.days.ago)
+
+      result = Archive.new.call
+
+      assert_equal 1, result.deleted_count
+      assert_equal 1, result.kept_count
+      assert Tender.exists?(watched.id)
+      assert_not Tender.exists?(forgotten.id)
+    end
+
     test "tenders without a closing date count from their last update" do
       stale = create_open_tender(proposals_close_at: nil, updated_at: 181.days.ago)
       fresh = create_open_tender(proposals_close_at: nil)

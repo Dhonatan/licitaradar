@@ -202,3 +202,8 @@ input[type="email"], input[type="password"], input[type="number"] {
 .data-table th, .data-table td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line); font-size: 0.9375rem; vertical-align: top; }
 .data-table th { color: var(--muted); font-size: 0.8125rem; font-weight: 600; }
 @media (max-width: 720px) { .data-table { display: block; overflow-x: auto; } }
+
+/* Watchlist ("Acompanhar", "Minhas licitações") */
+.tender-card__actions { margin-top: 0.6rem; }
+.watch-button { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.watch-button__error { color: #a61b1b; font-size: 0.875rem; }

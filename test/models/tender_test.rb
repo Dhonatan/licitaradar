@@ -129,4 +129,20 @@ class TenderTest < ActiveSupport::TestCase
     assert_equal FoldAccentsInTendersSearchable::ACCENTED, Tender::ACCENTED
     assert_equal FoldAccentsInTendersSearchable::UNACCENTED, Tender::UNACCENTED
   end
+
+  test "proposals_status says whether proposals are open, close today or closed" do
+    now = Time.zone.parse("2026-11-27 10:00")
+    tender = Tender.new(status_id: Tender::PUBLISHED_STATUS_ID)
+
+    tender.proposals_close_at = now + 3.days
+    assert_equal "open", tender.proposals_status(now: now)
+    tender.proposals_close_at = now.change(hour: 18)
+    assert_equal "closing_today", tender.proposals_status(now: now)
+    tender.proposals_close_at = now - 1.minute
+    assert_equal "closed", tender.proposals_status(now: now)
+    tender.proposals_close_at = nil
+    assert_equal "unknown", tender.proposals_status(now: now)
+    tender.assign_attributes(status_id: 3, proposals_close_at: now + 3.days)
+    assert_equal "closed", tender.proposals_status(now: now)
+  end
 end

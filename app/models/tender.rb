@@ -13,6 +13,7 @@ class Tender < ApplicationRecord
   DETAILS_REQUEST_INTERVAL = 10.minutes
 
   has_many :notifications, dependent: :delete_all
+  has_many :watches, dependent: :delete_all
   has_many :documents, -> { ordered }, class_name: "TenderDocument", inverse_of: :tender, dependent: :delete_all
   has_many :items, -> { ordered }, class_name: "TenderItem", inverse_of: :tender, dependent: :delete_all
 
@@ -43,6 +44,16 @@ class Tender < ApplicationRecord
 
   def open_for_proposals?
     status_id == PUBLISHED_STATUS_ID && proposals_close_at.present? && proposals_close_at.future?
+  end
+
+  # "open", "closing_today" (still open, closes today in Brasília time), "closed" or
+  # "unknown" (published without a deadline). Badges of "Minhas licitações" and the API.
+  def proposals_status(now: Time.current)
+    published = status_id == PUBLISHED_STATUS_ID
+    return "unknown" if published && proposals_close_at.nil?
+    return "closed" unless published && proposals_close_at > now
+
+    proposals_close_at.in_time_zone.to_date == now.in_time_zone.to_date ? "closing_today" : "open"
   end
 
   # The integration API addresses a tender by agency CNPJ, year and sequence.

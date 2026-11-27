@@ -14,7 +14,11 @@ Rails.application.routes.draw do
   resources :tenders, only: %i[ index show ] do
     # Documents and items, loaded into the tender page by a lazy Turbo Frame.
     get :details, on: :member
+    # "Acompanhar" button. GET only sends signed-out users back to the tender after login.
+    resource :watch, only: %i[ show create destroy ]
   end
+  # "Minhas licitações": the watched tenders.
+  resources :watches, only: :index, path: "minhas-licitacoes"
   resources :saved_searches, except: :show
   resources :api_tokens, only: %i[ index create destroy ]
 

@@ -12,7 +12,7 @@
 
 <% if search.results.any? %>
   <ol class="tender-list">
-    <%= render partial: "tenders/tender", collection: search.results %>
+    <%= render partial: "tenders/tender", collection: search.results, locals: { watched_tender_ids: watched_tender_ids } %>
   </ol>
 
   <%= render "tenders/pagination", search: search %>

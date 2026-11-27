@@ -1,0 +1,16 @@
+<%# The "Acompanhar" toggle. Locals: tender, watch (the user's Watch or nil), error (optional). %>
+<div class="watch-button" id="<%= dom_id(tender, :watch) %>">
+  <% if !authenticated? %>
+    <%= link_to "Acompanhar", tender_watch_path(tender), class: "button button--secondary button--small",
+                data: { turbo_frame: "_top" }, title: "Entre na sua conta para acompanhar esta licitação" %>
+  <% elsif watch %>
+    <%= button_to "✓ Acompanhando", tender_watch_path(tender), method: :delete, class: "button button--small",
+                  form_class: "inline-form", title: "Deixar de acompanhar esta licitação" %>
+  <% else %>
+    <%= button_to "Acompanhar", tender_watch_path(tender), class: "button button--secondary button--small",
+                  form_class: "inline-form", title: "Ver esta licitação em “Minhas licitações” e receber lembretes do prazo" %>
+  <% end %>
+  <% if local_assigns[:error].present? %>
+    <span class="watch-button__error" role="alert"><%= error %></span>
+  <% end %>
+</div>

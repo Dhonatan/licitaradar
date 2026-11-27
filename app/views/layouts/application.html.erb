@@ -16,6 +16,7 @@
       <nav class="site-nav">
         <%= link_to "Buscar licitações", tenders_path %>
         <% if authenticated? %>
+          <%= link_to "Minhas licitações", watches_path %>
           <%= link_to "Minhas buscas", saved_searches_path %>
           <%= link_to "API", api_tokens_path %>
           <%= link_to "Minha conta", account_path %>

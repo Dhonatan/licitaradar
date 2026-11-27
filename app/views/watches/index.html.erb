@@ -1,0 +1,44 @@
+<% content_for :title, "Minhas licitações — LicitaRadar" %>
+
+<div class="page-header">
+  <h1 class="page-title">Minhas licitações</h1>
+  <%= link_to "Buscar licitações", tenders_path, class: "button button--secondary" %>
+</div>
+
+<% if @watches.any? %>
+  <ol class="tender-list watch-list">
+    <% @watches.each do |watch| %>
+      <% tender = watch.tender %>
+      <li class="tender-card" id="<%= dom_id(watch) %>">
+        <div class="tender-card__meta">
+          <%= proposals_status_badge(tender) %>
+          <% if tender.proposals_close_at %>
+            <span class="muted">
+              <%= tender.open_for_proposals? ? "Propostas até" : "Encerrou em" %>
+              <time datetime="<%= tender.proposals_close_at.iso8601 %>"><%= date_time_br(tender.proposals_close_at) %></time>
+            </span>
+          <% end %>
+          <span class="muted"><%= tender_modality(tender) %></span>
+        </div>
+        <h2 class="tender-card__title">
+          <%= link_to (tender.object_description.presence || "Objeto não informado").truncate(220), tender_path(tender) %>
+        </h2>
+        <p class="muted">
+          <%= tender.agency_name %>
+          <% if (location = tender_location(tender)) %>· <%= location %><% end %>
+        </p>
+        <p class="tender-card__value"><%= tender_value(tender) %></p>
+        <div class="tender-card__actions">
+          <%= render "watches/button", tender: tender, watch: watch %>
+        </div>
+      </li>
+    <% end %>
+  </ol>
+  <p class="muted small">Você pode acompanhar até <%= Watch::MAX_PER_USER %> licitações. As encerradas continuam aqui até você removê-las.</p>
+<% else %>
+  <div class="empty-state">
+    <p>Você ainda não acompanha nenhuma licitação.</p>
+    <p class="muted">Clique em “Acompanhar” numa licitação para vê-la aqui, com o prazo sempre à vista.</p>
+    <p><%= link_to "Buscar licitações", tenders_path, class: "button" %></p>
+  </div>
+<% end %>

@@ -63,4 +63,28 @@ class QueryCountsTest < ActionDispatch::IntegrationTest
     # One COUNT per card ("Ver N licitações abertas"), bounded by SavedSearch::MAX_PER_USER.
     assert_equal one + 4, five
   end
+
+  test "the watchlist runs the same queries for 1 or 10 watched tenders" do
+    user = create_user
+    sign_in_as user
+    add_watches = ->(count) { count.times { Watch.watch!(user, create_open_tender) } }
+
+    few = queries_with(-> { add_watches.call(1) }) { get watches_path }
+    many = queries_with(-> { add_watches.call(9) }) { get watches_path }
+
+    assert_select ".watch-list .tender-card", 10
+    assert_equal few, many
+  end
+
+  test "the results page adds one query for a signed-in user's watched tenders" do
+    user = create_user
+    Watch.watch!(user, create_open_tender)
+    signed_out = queries_with(-> { 24.times { create_open_tender } }) { get tenders_path }
+    sign_in_as user
+
+    signed_in = queries_with(-> { nil }) { get tenders_path }
+
+    assert_select ".tender-card .watch-button form", 25
+    assert_operator signed_in, :<=, signed_out + 3 # session, user, watches
+  end
 end

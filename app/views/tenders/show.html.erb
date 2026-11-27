@@ -29,6 +29,7 @@
   </section>
 
   <div class="actions">
+    <%= render "watches/button", tender: @tender, watch: @watch %>
     <% if (pncp_url = external_url(@tender.pncp_url)) %>
       <%= link_to "Ver edital no PNCP", pncp_url, class: "button", target: "_blank", rel: "noopener noreferrer" %>
     <% end %>

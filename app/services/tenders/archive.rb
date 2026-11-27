@@ -5,7 +5,7 @@ module Tenders
   # from their last update.
   #
   # Tenders referenced elsewhere are kept, so links in old digests keep working: add every
-  # new table that points at tenders (watchlists...) to KEPT_WHEN_REFERENCED_BY, unless its
+  # new table that points at tenders to KEPT_WHEN_REFERENCED_BY, unless its
   # rows only describe the tender — tender_documents and tender_items are deleted with it
   # by their foreign keys (ON DELETE CASCADE).
   #
@@ -15,8 +15,9 @@ module Tenders
   class Archive
     DEFAULT_AFTER_DAYS = 180
     BATCH_SIZE = 1_000
-    # Models with a tender_id column whose rows keep the tender alive.
-    KEPT_WHEN_REFERENCED_BY = [ Notification ].freeze
+    # Models with a tender_id column whose rows keep the tender alive: tenders sent in a
+    # digest and tenders someone watches ("Minhas licitações").
+    KEPT_WHEN_REFERENCED_BY = [ Notification, Watch ].freeze
 
     Result = Data.define(:deleted_count, :kept_count, :cutoff)
 
