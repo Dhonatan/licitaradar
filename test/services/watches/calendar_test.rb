@@ -78,7 +78,7 @@ module Watches
 
       summary = events(calendar.to_ics).sole["SUMMARY"]
 
-      assert_equal "Prazo: Obras\; reforma\\, pintura \\\\ limpeza fase 2", summary
+      assert_equal "Prazo: Obras\\; reforma\\, pintura \\\\ limpeza fase 2", summary
     end
 
     test "long lines are folded at 75 octets without splitting characters" do
