@@ -43,3 +43,22 @@
     <p><%= link_to "Buscar licitações", tenders_path, class: "button" %></p>
   </div>
 <% end %>
+
+<section class="card calendar-feed" id="calendar">
+  <h2>Prazos no seu calendário</h2>
+  <p>
+    Assine o endereço abaixo no Google Agenda, no Outlook ou no Calendário da Apple para ver o fim do prazo de propostas
+    das licitações que você acompanha. O calendário se atualiza sozinho (os aplicativos buscam as mudanças algumas vezes por dia).
+  </p>
+  <% if (token = Current.user.calendar_token).present? %>
+    <p><code class="calendar-feed__url"><%= calendar_feed_url(token) %></code></p>
+    <div class="actions">
+      <%= link_to "Assinar no calendário", calendar_feed_url(token, protocol: "webcal"), class: "button button--small" %>
+      <%= button_to "Gerar novo link", calendar_token_path, class: "link-button", form_class: "inline-form",
+                    form: { data: { turbo_confirm: "O link atual vai parar de funcionar. Gerar um novo?" } } %>
+    </div>
+    <p class="muted small">O link é secreto: quem tiver o endereço vê quais licitações você acompanha (as notas nunca aparecem). Se ele vazar, gere um novo.</p>
+  <% else %>
+    <%= button_to "Gerar link do calendário", calendar_token_path, class: "button button--secondary button--small" %>
+  <% end %>
+</section>

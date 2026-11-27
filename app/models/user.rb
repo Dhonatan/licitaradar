@@ -19,6 +19,10 @@ class User < ApplicationRecord
   has_many :watches, dependent: :delete_all
   has_many :watched_tenders, through: :watches, source: :tender
 
+  # Secret of the calendar feed URL (CalendarFeedsController); "Gerar novo link" on
+  # "Minhas licitações" calls regenerate_calendar_token.
+  has_secure_token :calendar_token, length: 32
+
   # Signed token for the "stop every alert" link of the daily digest (see UnsubscribesController).
   generates_token_for :digest_unsubscribe_all
 

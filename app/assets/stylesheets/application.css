@@ -213,3 +213,6 @@ input[type="email"], input[type="password"], input[type="number"] {
 .watch-note__label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #8a5a00; }
 .watch-note__form { margin-top: 0.5rem; }
 .watch-note__form textarea { width: 100%; font: inherit; }
+.calendar-feed { margin-top: 1.5rem; }
+.calendar-feed p { color: inherit; }
+.calendar-feed__url { display: block; font-size: 0.875rem; overflow-wrap: anywhere; user-select: all; background: var(--bg); padding: 0.5rem 0.75rem; border-radius: 8px; }

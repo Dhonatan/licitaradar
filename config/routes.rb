@@ -23,6 +23,9 @@ Rails.application.routes.draw do
   end
   # "Minhas licitações": the watched tenders.
   resources :watches, only: :index, path: "minhas-licitacoes"
+  # Secret iCalendar feed of the watched deadlines, and the button that replaces its token.
+  get "calendario/:token.ics" => "calendar_feeds#show", as: :calendar_feed, format: false
+  resource :calendar_token, only: :create
   resources :saved_searches, except: :show
   resources :api_tokens, only: %i[ index create destroy ]
 
