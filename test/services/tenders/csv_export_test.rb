@@ -100,7 +100,7 @@ module Tenders
 
     test "the search's ordered scope exports every match, not one page" do
       30.times { |index| create_open_tender(object_description: "Serviço de buffet #{index}") }
-      search = Search.new(q: "buffet")
+      search = Search.new({ q: "buffet" })
 
       assert_equal 31, rows(export(search.ordered_scope).to_a.join).size
     end
