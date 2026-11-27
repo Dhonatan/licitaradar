@@ -62,8 +62,13 @@ module Tenders
       relation
     end
 
+    # Every match in the results' order (the CSV export reads it in batches).
+    def ordered_scope
+      scope.order(*order_clause)
+    end
+
     def results
-      @results ||= scope.order(*order_clause).limit(per_page).offset((page - 1) * per_page).to_a
+      @results ||= ordered_scope.limit(per_page).offset((page - 1) * per_page).to_a
     end
 
     def total_count

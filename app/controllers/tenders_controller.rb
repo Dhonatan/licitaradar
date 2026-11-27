@@ -1,5 +1,11 @@
 class TendersController < ApplicationController
+  include CsvStreaming
+
   allow_unauthenticated_access
+  # The CSV export of the results (up to Tenders::CsvExport::MAX_ROWS) is for signed-in users.
+  before_action :require_authentication, only: :index, if: :csv_request?
+  rate_limit to: 20, within: 10.minutes, only: :index, if: :csv_request?, by: -> { Current.user.id },
+             with: -> { redirect_to tenders_path, alert: "Muitas exportações seguidas. Aguarde alguns minutos e tente de novo." }
 
   # The "tender_details" frame reloads itself every few seconds while the documents and
   # items are being fetched, up to this many times (about a minute).
@@ -9,7 +15,13 @@ class TendersController < ApplicationController
 
   def index
     @search = Tenders::Search.new(search_params)
-    @watched_tender_ids = watched_tender_ids(@search.results)
+
+    respond_to do |format|
+      format.html { @watched_tender_ids = watched_tender_ids(@search.results) }
+      format.csv do
+        stream_csv Tenders::CsvExport.new(@search.ordered_scope, urls: self), filename: "licitacoes-abertas-#{Date.current.iso8601}.csv"
+      end
+    end
   end
 
   def show
@@ -32,6 +44,10 @@ class TendersController < ApplicationController
   end
 
   private
+    def csv_request?
+      request.format.csv?
+    end
+
     # The tenders of the page the signed-in user watches (one query), for the "Acompanhar" buttons.
     def watched_tender_ids(tenders)
       return Set.new unless authenticated?

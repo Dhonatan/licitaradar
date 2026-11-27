@@ -3,11 +3,18 @@
     <strong><%= number_with_delimiter(search.total_count, delimiter: ".") %></strong>
     <%= search.total_count == 1 ? "licitação aberta encontrada" : "licitações abertas encontradas" %><%= " para “#{search.q}”" if search.q %><%= " no nicho #{search.niche.name}" if search.niche %>.
   </p>
-  <% if search.filtered? %>
-    <%= link_to "Salvar esta busca", new_saved_search_path(search.to_params.except(:sort)),
-                class: "button button--secondary button--small save-search", data: { turbo_frame: "_top" },
-                title: "Receba por e-mail as licitações novas desta busca" %>
-  <% end %>
+  <div class="results-summary__actions">
+    <% if search.total_count > 0 %>
+      <%= link_to "Exportar CSV", tenders_path(search.to_params.merge(format: :csv)),
+                  class: "button button--secondary button--small export-csv", data: { turbo: false },
+                  title: "Baixe até #{number_with_delimiter(Tenders::CsvExport::MAX_ROWS, delimiter: ".")} licitações desta busca para abrir no Excel ou em outra planilha" %>
+    <% end %>
+    <% if search.filtered? %>
+      <%= link_to "Salvar esta busca", new_saved_search_path(search.to_params.except(:sort)),
+                  class: "button button--secondary button--small save-search", data: { turbo_frame: "_top" },
+                  title: "Receba por e-mail as licitações novas desta busca" %>
+    <% end %>
+  </div>
 </div>
 
 <% if search.results.any? %>

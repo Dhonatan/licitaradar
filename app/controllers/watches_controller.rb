@@ -1,11 +1,19 @@
-# "Minhas licitações" (the tenders the user follows) and the "Acompanhar" button of the
+# "Minhas licitações" (the tenders the user follows, also as CSV) and the "Acompanhar" button of the
 # tender page and the results (POST/DELETE /tenders/:tender_id/watch, answered with a
 # Turbo Stream that swaps the button).
 class WatchesController < ApplicationController
+  include CsvStreaming
+
   before_action :set_tender, only: %i[ show create destroy ]
 
   def index
-    @watches = Current.user.watches.by_deadline.preload(:tender)
+    respond_to do |format|
+      format.html { @watches = Current.user.watches.by_deadline.preload(:tender) }
+      format.csv do
+        stream_csv Tenders::CsvExport.new(Current.user.watches.by_deadline, urls: self, notes: true),
+                   filename: "minhas-licitacoes-#{Date.current.iso8601}.csv"
+      end
+    end
   end
 
   # Signed-out visitors click "Acompanhar" here: they log in and come back to the tender.

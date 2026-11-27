@@ -216,3 +216,5 @@ input[type="email"], input[type="password"], input[type="number"] {
 .calendar-feed { margin-top: 1.5rem; }
 .calendar-feed p { color: inherit; }
 .calendar-feed__url { display: block; font-size: 0.875rem; overflow-wrap: anywhere; user-select: all; background: var(--bg); padding: 0.5rem 0.75rem; border-radius: 8px; }
+.results-summary__actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.page-header .actions { margin: 0; }
